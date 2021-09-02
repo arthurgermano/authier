@@ -12,7 +12,7 @@ Authier is a simple library helper to make it easier to implement and serve auth
   - [Example](#example)
   - [Auth Flow](#auth-flow)
     - [Fields of Client](#fields-of-client)
-    - [Methods to be Implemented](#methods-to-be-implemented)
+  - [Methods to be Implemented](#methods-to-be-implemented)
   
 
 ## Features
@@ -98,29 +98,10 @@ Example of Authier Extension
   redirect_uri_required;
 
 ```
-
-
-#### Methods to be Implemented
+### Methods to be Implemented
 The methods that should be implemented:
-
-##### Find Client
-```js
-/**
- * Summary.
- * - Finds a matching client_id Client in the database
- * - Fills the Class Properties
- * - Returns the client found or throws INVALID_CLIENT
- *
- * @param {String} client_id - The client_id string provided in the request.
- *
- * @throws InvalidClient
- * @throws InvalidRequest
- * @throws ServerError
- *
- * @return {Object} properties - Class properties
- */
-async function findClient(client_id) {
-  // Must populate the fields
-  throw ERRORS.TODO_ERROR;
-}
-```
+<br />
+<a href="https://github.com/arthurgermano/authier/blob/master/auth_server_example/oauth2extension/index.js" target="_blank">
+Example of Authier Extension
+</a>
+<br />
