@@ -1,0 +1,21 @@
+{
+  "name": "authier",
+  "version": "1.0.0",
+  "author": "Arthur José Germano",
+  "license": "MIT",
+  "main": "src/index.js",
+  "keywords": [
+    "oauth2",
+    "authentication",
+    "RFC6749",
+    "grant",
+    "server"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/arthurgermano/authier"
+  },
+  "bugs": {
+    "url": "https://github.com/arthurgermano/authier/issues"
+  }
+}
