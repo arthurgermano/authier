@@ -62,6 +62,7 @@ class AuthFlow {
    * @param {Object} provided_data - An object with the class properties to be set.
    * @param {String} provided_data.client_id - The client_id string identification.
    * @param {String} provided_data.client_secret - The client_secret string.
+   * @param {String} provided_data.issuer - The issuer string.
    * @param {String} provided_data.grant_types - The grant types granted for this client.
    * @param {String} provided_data.redirect_uris - The client redirect uris string separated by spaces.
    * @param {String} provided_data.scopes - The client scopes string separated by spaces.
