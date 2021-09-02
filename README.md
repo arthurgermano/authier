@@ -2,7 +2,7 @@
 
 ## Simple Authenticator Library
 
-The Authier is a simple library helper to make it easier to implement and serve authentication methods using OAuth2.0.
+Authier is a simple library helper to make it easier to implement and serve authentication methods using OAuth2.0.
 
 ## Index
 
@@ -10,6 +10,8 @@ The Authier is a simple library helper to make it easier to implement and serve 
   - [Features](#features)
   - [Install](#install)
   - [Example](#example)
+  - [Methods to be Implemented](#methods-to-be-implemented)
+  
 
 ## Features
 
@@ -26,4 +28,12 @@ with npm
 npm i authier
 ```
 
-### Examples
+### Example
+
+Create an extension to override or implement the required functions as showed in the example here:
+<a href="https://github.com/arthurgermano/authier/blob/master/auth_server_example/oauth2extension/index.js" target="_blank">
+Example of Authier Extension
+</a>
+<br />
+
+### Methods to be Implemented
