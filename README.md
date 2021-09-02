@@ -37,3 +37,4 @@ Example of Authier Extension
 <br />
 
 ### Methods to be Implemented
+<h3>Find Client</h3>
