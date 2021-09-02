@@ -14,14 +14,16 @@ Authier is a simple library helper to make it easier to implement and serve auth
     - [Example](#example)
     - [Auth Flow](#auth-flow)
       - [Fields of Client](#fields-of-client)
-      - [Functions of Auth Flow](#functions-of-auth-flow)
+      - [Example of Functions of Auth Flow Implemented](#example-of-functions-of-auth-flow-implemented)
     - [Code Flow](#code-flow)
-      - [Functions of Code Flow](#functions-of-code-flow)
+      - [Fields of Code](#fields-of-code)
+      - [Example of Functions of Code Flow Implemented](#example-of-functions-of-code-flow-implemented)
     - [Password Flow](#password-flow)
-      - [Functions of Password Flow](#functions-of-password-flow)
+      - [Fields of Password](#fields-of-password)
+      - [Example of Functions of Password Flow Implemented](#example-of-functions-of-password-flow-implemented)
     - [Refresh Token Flow](#refresh-token-flow)
-      - [Functions of Refresh Token Flow](#functions-of-refresh-token-flow)
-    - [Methods to be Implemented](#methods-to-be-implemented)
+      - [Example of Functions of Refresh Token Flow Implemented](#example-of-functions-of-refresh-token-flow-implemented)
+    - [Example of All Methods to be Implemented](#example-of-all-methods-to-be-implemented)
 
 ## Features
 
@@ -107,7 +109,7 @@ state_required;
 redirect_uri_required;
 ```
 
-#### Functions of Auth Flow
+#### Example of Functions of Auth Flow Implemented
 
 ```js
 // --------------------------  AUTH FLOW FUNCTIONS  -----------------------------------
@@ -153,7 +155,7 @@ AuthFlow.prototype.validateToken = async function validateToken(token) {
 <hr />
 
 ### Code Flow
-
+#### Fields of Code
 It inherits from Auth Flow fields and adds the following:
 
 ```js
@@ -164,7 +166,7 @@ It inherits from Auth Flow fields and adds the following:
 code;
 ```
 
-#### Functions of Code Flow
+#### Example of Functions of Code Flow Implemented
 
 It inherits from Auth Flow functions and adds the following:
 
@@ -202,7 +204,7 @@ AuthorizationCodeFlow.prototype.validateCode = async function validateCode(
 <hr />
 
 ### Password Flow
-
+#### Fields of Password
 It inherits from Auth Flow fields and adds the following:
 
 ```js
@@ -219,7 +221,7 @@ user_name;
 password;
 ```
 
-#### Functions of Password Flow
+#### Example of Functions of Password Flow Implemented
 
 It inherits from Auth Flow functions and adds the following:
 
@@ -241,7 +243,7 @@ PasswordFlow.prototype.findResource = async function findResource(user_name) {
 
 ### Refresh Token Flow
 
-#### Functions of Refresh Token Flow
+#### Example of Functions of Refresh Token Flow Implemented
 
 It inherits from Auth Flow functions and adds the following:
 
@@ -273,9 +275,9 @@ RefreshTokenFlow.prototype.validateRefreshToken =
 // ------------------------------------------------------------------------------------
 ```
 
-### Methods to be Implemented
+### Example of All Methods to be Implemented
 
-The methods that should be implemented:
+The example of all methods that should be implemented:
 <br />
 <a href="https://github.com/arthurgermano/authier/blob/master/auth_server_example/oauth2extension/index.js" target="_blank">
 Example of Authier Extension
