@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "authier": "^1.0.0",
     "fastify": "^3.19.1",
     "jsonwebtoken": "^8.5.1"
   }

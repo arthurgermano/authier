@@ -3,10 +3,10 @@ const path = require("path");
 const jwt = require("jsonwebtoken");
 
 const privateKey = fs.readFileSync(
-  path.resolve(__dirname, "../../keys/jwtRS512.key")
+  path.resolve(__dirname, "./../keys/jwtRS512.key")
 );
 const publicKey = fs.readFileSync(
-  path.resolve(__dirname, "../../keys/jwtRS512.key.pub")
+  path.resolve(__dirname, "./../keys/jwtRS512.key.pub")
 );
 
 // ------------------------------------------------------------------------------------
@@ -27,7 +27,7 @@ function checkToken(token) {
 
 async function getClients() {
   return new Promise((resolve, reject) => {
-    fs.readFile("../db/client_data.json", (err, data) => {
+    fs.readFile("./db/client_data.json", (err, data) => {
       if (err) return reject(err);
       resolve(JSON.parse(data.toString()));
     });
@@ -52,7 +52,7 @@ function signToken(jwtContent = {}) {
 
 async function getResources() {
   return new Promise((resolve, reject) => {
-    fs.readFile("../db/resource_data.json", (err, data) => {
+    fs.readFile("./db/resource_data.json", (err, data) => {
       if (err) return reject(err);
       resolve(JSON.parse(data.toString()));
     });
