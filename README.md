@@ -11,6 +11,7 @@ Authier is a simple library helper to make it easier to implement and serve auth
   - [Index](#index)
   - [Features](#features)
   - [Install](#install)
+  - [Test It](#test-it)
     - [Example](#example)
     - [Auth Flow](#auth-flow)
       - [Fields of Client](#fields-of-client)
@@ -39,6 +40,14 @@ with npm
 ```bash
 npm i authier
 ```
+
+## Test It
+Testing it locally:
+- Clone this project into your local machine.
+- Inside the project folder auth_server_example, run npm install
+- Then just run node index.js or nodemon index.js 
+- It will simple use a local file to example a Database and runs some tests
+- Edit at your will to help you understand how the lib works, but it is very simple.
 
 ### Example
 
