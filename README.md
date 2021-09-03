@@ -12,19 +12,19 @@ Authier is a simple library helper to make it easier to implement and serve auth
   - [Features](#features)
   - [Install](#install)
   - [Test It](#test-it)
-    - [Example](#example)
-    - [Auth Flow](#auth-flow)
-      - [Fields of Client](#fields-of-client)
-      - [Example of Functions of Auth Flow Implemented](#example-of-functions-of-auth-flow-implemented)
-    - [Code Flow](#code-flow)
-      - [Fields of Code](#fields-of-code)
-      - [Example of Functions of Code Flow Implemented](#example-of-functions-of-code-flow-implemented)
-    - [Password Flow](#password-flow)
-      - [Fields of Password](#fields-of-password)
-      - [Example of Functions of Password Flow Implemented](#example-of-functions-of-password-flow-implemented)
-    - [Refresh Token Flow](#refresh-token-flow)
-      - [Example of Functions of Refresh Token Flow Implemented](#example-of-functions-of-refresh-token-flow-implemented)
-    - [Example of All Methods to be Implemented](#example-of-all-methods-to-be-implemented)
+  - [Example](#example)
+  - [Auth Flow](#auth-flow)
+    - [Fields of Client](#fields-of-client)
+    - [Example of Functions of Auth Flow Implemented](#example-of-functions-of-auth-flow-implemented)
+  - [Code Flow](#code-flow)
+    - [Fields of Code](#fields-of-code)
+    - [Example of Functions of Code Flow Implemented](#example-of-functions-of-code-flow-implemented)
+  - [Password Flow](#password-flow)
+    - [Fields of Password](#fields-of-password)
+    - [Example of Functions of Password Flow Implemented](#example-of-functions-of-password-flow-implemented)
+  - [Refresh Token Flow](#refresh-token-flow)
+    - [Example of Functions of Refresh Token Flow Implemented](#example-of-functions-of-refresh-token-flow-implemented)
+  - [Example of All Methods to be Implemented](#example-of-all-methods-to-be-implemented)
 
 ## Features
 
@@ -49,7 +49,7 @@ Testing it locally:
 - It will simple use a local file to example a Database and runs some tests
 - Edit at your will to help you understand how the lib works, but it is very simple.
 
-### Example
+## Example
 
 Create an extension to override or implement the required functions as showed in the example here:
 <br />
@@ -58,9 +58,9 @@ Example of Authier Extension
 </a>
 <br />
 
-### Auth Flow
+## Auth Flow
 
-#### Fields of Client
+### Fields of Client
 
 ```js
 /**
@@ -118,7 +118,7 @@ state_required;
 redirect_uri_required;
 ```
 
-#### Example of Functions of Auth Flow Implemented
+### Example of Functions of Auth Flow Implemented
 
 ```js
 // --------------------------  AUTH FLOW FUNCTIONS  -----------------------------------
@@ -163,8 +163,8 @@ AuthFlow.prototype.validateToken = async function validateToken(token) {
 
 <hr />
 
-### Code Flow
-#### Fields of Code
+## Code Flow
+### Fields of Code
 It inherits from Auth Flow fields and adds the following:
 
 ```js
@@ -175,7 +175,7 @@ It inherits from Auth Flow fields and adds the following:
 code;
 ```
 
-#### Example of Functions of Code Flow Implemented
+### Example of Functions of Code Flow Implemented
 
 It inherits from Auth Flow functions and adds the following:
 
@@ -212,8 +212,8 @@ AuthorizationCodeFlow.prototype.validateCode = async function validateCode(
 
 <hr />
 
-### Password Flow
-#### Fields of Password
+## Password Flow
+### Fields of Password
 It inherits from Auth Flow fields and adds the following:
 
 ```js
@@ -230,7 +230,7 @@ user_name;
 password;
 ```
 
-#### Example of Functions of Password Flow Implemented
+### Example of Functions of Password Flow Implemented
 
 It inherits from Auth Flow functions and adds the following:
 
@@ -250,9 +250,9 @@ PasswordFlow.prototype.findResource = async function findResource(user_name) {
 // ------------------------------------------------------------------------------------
 ```
 
-### Refresh Token Flow
+## Refresh Token Flow
 
-#### Example of Functions of Refresh Token Flow Implemented
+### Example of Functions of Refresh Token Flow Implemented
 
 It inherits from Auth Flow functions and adds the following:
 
@@ -284,7 +284,7 @@ RefreshTokenFlow.prototype.validateRefreshToken =
 // ------------------------------------------------------------------------------------
 ```
 
-### Example of All Methods to be Implemented
+## Example of All Methods to be Implemented
 
 The example of all methods that should be implemented:
 <br />
