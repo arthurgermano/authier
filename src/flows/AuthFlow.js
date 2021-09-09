@@ -15,22 +15,40 @@ class AuthFlow {
   client_secret;
 
   /**
-   * Token issuer identification.
-   * @type {String}
-   */
-   issuer;
-
-  /**
    * Grant types granted for this client
    * @type {String}
    */
   grant_types;
 
   /**
+   * Token issuer identification.
+   * @type {String}
+   */
+  issuer;
+
+  /**
+   * Client option to issue or not a refresh client token - default is true
+   * @type {String}
+   */
+  issues_refresh_token;
+
+  /**
+   * Client's option whether the redirect_uri is required
+   * @type {Boolean}
+   */
+  redirect_uri_required;
+
+  /**
    * Client's redirect uris string separated by spaces
    * @type {String}
    */
   redirect_uris;
+
+  /**
+   * Refresh Token TTL - default is 7200 seconds
+   * @type {Number}
+   */
+  refresh_token_expire_in;
 
   /**
    * Client's custom scopes string separated by spaces
@@ -51,10 +69,10 @@ class AuthFlow {
   state_required;
 
   /**
-   * Client's option whether the redirect_uri is required
-   * @type {Boolean}
+   * Token TTL - default is 3600 seconds
+   * @type {Number}
    */
-  redirect_uri_required;
+  token_expire_in;
 
   /**
    * Summary. Creates a AuthFlow
@@ -63,12 +81,15 @@ class AuthFlow {
    * @param {String} provided_data.client_id - The client_id string identification.
    * @param {String} provided_data.client_secret - The client_secret string.
    * @param {String} provided_data.issuer - The issuer string.
+   * @param {String} provided_data.issues_refresh_token - Client option wether refreshes token or not.
    * @param {String} provided_data.grant_types - The grant types granted for this client.
+   * @param {Boolean} provided_data.redirect_uri_required - Option boolean declaring if the redirect uri is required.
    * @param {String} provided_data.redirect_uris - The client redirect uris string separated by spaces.
+   * @param {Boolean} provided_data.refresh_token_expire_in - Refresh Token TTL - default is 7200 seconds
    * @param {String} provided_data.scopes - The client scopes string separated by spaces.
    * @param {Boolean} provided_data.scope_required - Option boolean declaring if the scope is required.
    * @param {Boolean} provided_data.state_required - Option boolean declaring if the state is required.
-   * @param {Boolean} provided_data.redirect_uri_required - Option boolean declaring if the redirect uri is required.
+   * @param {Boolean} provided_data.token_expire_in - Token TTL - default is 3600 seconds
    *
    * @constructor
    */
@@ -88,12 +109,15 @@ class AuthFlow {
       client_id: this.client_id,
       client_secret: this.client_secret,
       issuer: this.issuer,
+      issues_refresh_token: this.issues_refresh_token,
       grant_types: this.grant_types,
+      redirect_uris: this.redirect_uris,
+      redirect_uri_required: this.redirect_uri_required,
+      refresh_token_expire_in: this.refresh_token_expire_in,
       scope_required: this.scope_required,
       scopes: this.scopes,
       state_required: this.state_required,
-      redirect_uris: this.redirect_uris,
-      redirect_uri_required: this.redirect_uri_required,
+      token_expire_in: this.token_expire_in,
     };
   }
 
@@ -144,23 +168,31 @@ class AuthFlow {
    * @param {String} provided_data.client_id - The client_id string identification.
    * @param {String} provided_data.client_secret - The client_secret string.
    * @param {String} provided_data.grant_types - The grant types granted for this client.
-   * @param {String} provided_data.redirect_uris - The client redirect uris string separated by spaces.
+   * @param {String} provided_data.issuer - The issuer string.
+   * @param {String} provided_data.issues_refresh_token - Client option wether refreshes token or not.
    * @param {String} provided_data.scopes - The client scopes string separated by spaces.
    * @param {Boolean} provided_data.scope_required - Option boolean declaring if the scope is required.
    * @param {Boolean} provided_data.state_required - Option boolean declaring if the state is required.
    * @param {Boolean} provided_data.redirect_uri_required - Option boolean declaring if the redirect uri is required.
+   * @param {String} provided_data.redirect_uris - The client redirect uris string separated by spaces.
+   * @param {Boolean} provided_data.refresh_token_expire_in - Refresh Token TTL - default is 7200 seconds
+   * @param {Boolean} provided_data.token_expire_in - Token TTL - default is 3600 seconds
    *
    */
   setProperties(provided_data = {}) {
     this.client_id = provided_data.client_id;
     this.client_secret = provided_data.client_secret;
     this.issuer = provided_data.issuer;
+    this.issues_refresh_token = provided_data.issues_refresh_token || true;
     this.grant_types = provided_data.grant_types;
+    this.redirect_uri_required = provided_data.redirect_uri_required;
+    this.redirect_uris = provided_data.redirect_uris;
+    this.refresh_token_expire_in =
+      provided_data.refresh_token_expire_in || 7200;
     this.scope_required = provided_data.scope_required;
     this.scopes = provided_data.scopes;
     this.state_required = provided_data.state_required;
-    this.redirect_uris = provided_data.redirect_uris;
-    this.redirect_uri_required = provided_data.redirect_uri_required;
+    this.token_expire_in = provided_data.token_expire_in || 3600;
   }
 
   // ------------------------------------------------------------------------------------
@@ -313,9 +345,9 @@ async function findClient(client_id) {
 /**
  * Summary. Basically generates a string token and returns it
  * - Can be implemented to do more things as save generated tokens in the database etc...
- * 
+ *
  * @param {Object} token_data - The token information that must be included in the token.
- * 
+ *
  * @param {Object} options - The options that must be considered when generating the token should have the information to be added into the token
  *
  * @throws ServerError
@@ -333,9 +365,9 @@ async function generateToken(token_data, options) {
 /**
  * Summary. Validates the flow to get a token - each child flow has its own logic
  * - Can be implemented to do more things as save tokens in the database etc...
- * 
+ *
  * @param {Object} token_generate_data - The token information that must be included in the token to validate the get token request
- * 
+ *
  * @param {Object} options - The options that must be considered when generating the token should have the information to be added into the token
  *
  * @throws Errors - Depending of the flow
@@ -352,7 +384,7 @@ async function getToken(token_generate_data, options) {
 /**
  * Summary. Validates a provided token
  * - Can be implemented to do more things as save tokens in the database etc...
- * 
+ *
  * @param {String} token - The token string to be validated.
  *
  * @throws Errors - Depending of the flow

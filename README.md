@@ -66,59 +66,77 @@ Example of Authier Extension
 ### Fields of Client
 
 ```js
-/**
- * Client's identification string.
- * @type {String}
- */
-client_id;
+  /**
+   * Client's identification string.
+   * @type {String}
+   */
+  client_id;
 
-/**
- * Client's secret string.
- * @type {String}
- */
-client_secret;
+  /**
+   * Client's secret string.
+   * @type {String}
+   */
+  client_secret;
 
-/**
- * Token issuer identification.
- * @type {String}
- */
-issuer;
+  /**
+   * Grant types granted for this client
+   * @type {String}
+   */
+  grant_types;
 
-/**
- * Grant types granted for this client
- * @type {String}
- */
-grant_types;
+  /**
+   * Token issuer identification.
+   * @type {String}
+   */
+  issuer;
 
-/**
- * Client's redirect uris string separated by spaces
- * @type {String}
- */
-redirect_uris;
+  /**
+   * Client option to issue or not a refresh client token - default is true
+   * @type {String}
+   */
+  issues_refresh_token;
 
-/**
- * Client's custom scopes string separated by spaces
- * @type {String}
- */
-scopes;
+  /**
+   * Client's option whether the redirect_uri is required
+   * @type {Boolean}
+   */
+  redirect_uri_required;
 
-/**
- * Client's option whether the scope is required
- * @type {Boolean}
- */
-scope_required;
+  /**
+   * Client's redirect uris string separated by spaces
+   * @type {String}
+   */
+  redirect_uris;
 
-/**
- * Client's option whether the state is required
- * @type {Boolean}
- */
-state_required;
+  /**
+   * Refresh Token TTL - default is 7200 seconds
+   * @type {Number}
+   */
+  refresh_token_expire_in;
 
-/**
- * Client's option whether the redirect_uri is required
- * @type {Boolean}
- */
-redirect_uri_required;
+  /**
+   * Client's custom scopes string separated by spaces
+   * @type {String}
+   */
+  scopes;
+
+  /**
+   * Client's option whether the scope is required
+   * @type {Boolean}
+   */
+  scope_required;
+
+  /**
+   * Client's option whether the state is required
+   * @type {Boolean}
+   */
+  state_required;
+
+  /**
+   * Token TTL - default is 3600 seconds
+   * @type {Number}
+   */
+  token_expire_in;
 ```
 
 ### Example of Functions of Auth Flow Implemented
@@ -181,11 +199,17 @@ There is no need to implement functions as long as you implemented Auth Flow Fun
 It inherits from Auth Flow fields and adds the following:
 
 ```js
-/**
- * Authorization Code flow code string.
- * @type {String}
- */
-code;
+  /**
+   * Authorization Code flow code string.
+   * @type {String}
+   */
+  code;
+  
+  /**
+   * Authorization Code TTL - Default is 5 minutes.
+   * @type {Number}
+   */
+  code_expires_in;
 ```
 
 ### Example of Functions of Code Flow Implemented
@@ -230,17 +254,17 @@ AuthorizationCodeFlow.prototype.validateCode = async function validateCode(
 It inherits from Auth Flow fields and adds the following:
 
 ```js
-/**
- * Password flow user_name string.
- * @type {String}
- */
-user_name;
-
-/**
- * Password flow password string.
- * @type {String}
- */
-password;
+  /**
+   * Password flow user_name string.
+   * @type {String}
+   */
+  user_name;
+  
+  /**
+   * Password flow password string.
+   * @type {String}
+   */
+  password;
 ```
 
 ### Example of Functions of Password Flow Implemented

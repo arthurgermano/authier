@@ -14,20 +14,16 @@ class AuthorizationCodeFlow extends AuthFlow {
    */
   code;
 
+  /**
+   * Authorization Code TTL - Default is 5 minutes.
+   * @type {Number}
+   */
+  code_expires_in;
+
   // ------------------------------------------------------------------------------------
 
   /**
    * Summary. Creates a Authorization Code Flow
-   *
-   * @param {Object} provided_data - An object with the class properties to be set.
-   * @param {String} provided_data.client_id - The client_id string identification.
-   * @param {String} provided_data.client_secret - The client_secret string.
-   * @param {String} provided_data.grant_types - The grant types granted for this client.
-   * @param {String} provided_data.redirect_uris - The client redirect uris string separated by spaces.
-   * @param {String} provided_data.scopes - The client scopes string separated by spaces.
-   * @param {Boolean} provided_data.scope_required - Option boolean declaring if the scope is required.
-   * @param {Boolean} provided_data.state_required - Option boolean declaring if the state is required.
-   * @param {Boolean} provided_data.redirect_uri_required - Option boolean declaring if the redirect uri is required.
    * @param {String} provided_data.code - Authorization Code flow code string.
    *
    * @constructor
@@ -35,6 +31,7 @@ class AuthorizationCodeFlow extends AuthFlow {
   constructor(provided_data = {}) {
     super(provided_data);
     this.code = provided_data.code;
+    this.code_expires_in = provided_data.code_expires_in || 300;
   }
 
   // ------------------------------------------------------------------------------------
@@ -47,7 +44,7 @@ class AuthorizationCodeFlow extends AuthFlow {
    * - Validates the scopes provided if they match the client scopes
    * - Validates if the state is valid and if it is required or not
    * - Generates a code to request a token
-   * 
+   *
    * @param {Object} provided_data - An object with the Authorization Code Flow info required to generate a Code.
    * @param {String} provided_data.client_id - The client_id string identification.
    * @param {String} provided_data.response_type - The response_type must be "code".
@@ -56,7 +53,7 @@ class AuthorizationCodeFlow extends AuthFlow {
    * @param {String} provided_data.state - The state if required by the client
    *
    * @param {Object} options - An object with all the options needed to generate code function.
-   * 
+   *
    * @throws InvalidRequest
    * @throws InvalidClient
    * @throws MismatchClient
@@ -86,6 +83,21 @@ class AuthorizationCodeFlow extends AuthFlow {
   // ------------------------------------------------------------------------------------
 
   /**
+   * Summary. Returns Authorization Code Flow Properties
+   *
+   * @return {Object} Authorization Code flow - properties
+   */
+  getProperties() {
+    return {
+      ...super.getProperties(),
+      code: this.code,
+      code_expires_in: this.code_expires_in,
+    };
+  }
+
+  // ------------------------------------------------------------------------------------
+
+  /**
    * Summary. Validates the flow to get a token -
    * - Validates the client_id
    * - Validates if the client has the grant type
@@ -101,9 +113,9 @@ class AuthorizationCodeFlow extends AuthFlow {
    * @param {String} provided_data.redirect_uri - The redirect uri string to redirect the request after resource approval.
    * @param {String} provided_data.code_requested_uri - The redirect uri requested in the code request
    * @param {String} provided_data.code - The code to be validated received in the first request
-   * 
+   *
    * @param {Object} options - An object with all the options needed to generate token function.
-   * 
+   *
    * @throws InvalidRequest
    * @throws InvalidClient
    * @throws MismatchClient
@@ -148,9 +160,9 @@ class AuthorizationCodeFlow extends AuthFlow {
 /**
  * Summary. Basically generates a string code and returns it
  * - Can be implemented to do more things as save generated codes in the database etc...
- * 
+ *
  * @param {Object} code_data - The code information that must be included in the code.
- * 
+ *
  * @param {Object} options - The options that must be considered when generating the code should have the information to be added into the code
  *
  * @throws ServerError
@@ -168,7 +180,7 @@ async function generateCode(code_data, options) {
 /**
  * Summary. Validates a provided code
  * - Can be implemented to do more things as save codes in the database etc...
- * 
+ *
  * @param {String} code - The code string to be validated.
  *
  * @throws Errors - Depending of the flow
