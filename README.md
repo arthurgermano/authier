@@ -16,9 +16,12 @@ Authier is a simple library helper to make it easier to implement and serve auth
   - [Auth Flow](#auth-flow)
     - [Fields of Client](#fields-of-client)
     - [Example of Functions of Auth Flow Implemented](#example-of-functions-of-auth-flow-implemented)
-  - [Code Flow](#code-flow)
+  - [Client Credentials Flow](#client-credentials-flow)
     - [Fields of Code](#fields-of-code)
     - [Example of Functions of Code Flow Implemented](#example-of-functions-of-code-flow-implemented)
+  - [Code Flow](#code-flow)
+    - [Fields of Code](#fields-of-code-1)
+    - [Example of Functions of Code Flow Implemented](#example-of-functions-of-code-flow-implemented-1)
   - [Password Flow](#password-flow)
     - [Fields of Password](#fields-of-password)
     - [Example of Functions of Password Flow Implemented](#example-of-functions-of-password-flow-implemented)
@@ -160,6 +163,16 @@ AuthFlow.prototype.validateToken = async function validateToken(token) {
 
 // ------------------------------------------------------------------------------------
 ```
+
+
+<hr />
+
+## Client Credentials Flow
+### Fields of Code
+It inherits from Auth Flow fields
+
+### Example of Functions of Code Flow Implemented
+There is no need to implement functions as long as you implemented Auth Flow Functions
 
 <hr />
 
