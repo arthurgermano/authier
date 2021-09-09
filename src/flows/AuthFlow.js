@@ -48,7 +48,7 @@ class AuthFlow {
    * Refresh Token TTL - default is 7200 seconds
    * @type {Number}
    */
-  refresh_token_expire_in;
+  refresh_token_expires_in;
 
   /**
    * Client's custom scopes string separated by spaces
@@ -72,7 +72,7 @@ class AuthFlow {
    * Token TTL - default is 3600 seconds
    * @type {Number}
    */
-  token_expire_in;
+  token_expires_in;
 
   /**
    * Summary. Creates a AuthFlow
@@ -85,11 +85,11 @@ class AuthFlow {
    * @param {String} provided_data.grant_types - The grant types granted for this client.
    * @param {Boolean} provided_data.redirect_uri_required - Option boolean declaring if the redirect uri is required.
    * @param {String} provided_data.redirect_uris - The client redirect uris string separated by spaces.
-   * @param {Boolean} provided_data.refresh_token_expire_in - Refresh Token TTL - default is 7200 seconds
+   * @param {Boolean} provided_data.refresh_token_expires_in - Refresh Token TTL - default is 7200 seconds
    * @param {String} provided_data.scopes - The client scopes string separated by spaces.
    * @param {Boolean} provided_data.scope_required - Option boolean declaring if the scope is required.
    * @param {Boolean} provided_data.state_required - Option boolean declaring if the state is required.
-   * @param {Boolean} provided_data.token_expire_in - Token TTL - default is 3600 seconds
+   * @param {Boolean} provided_data.token_expires_in - Token TTL - default is 3600 seconds
    *
    * @constructor
    */
@@ -113,11 +113,11 @@ class AuthFlow {
       grant_types: this.grant_types,
       redirect_uris: this.redirect_uris,
       redirect_uri_required: this.redirect_uri_required,
-      refresh_token_expire_in: this.refresh_token_expire_in,
+      refresh_token_expires_in: this.refresh_token_expires_in,
       scope_required: this.scope_required,
       scopes: this.scopes,
       state_required: this.state_required,
-      token_expire_in: this.token_expire_in,
+      token_expires_in: this.token_expires_in,
     };
   }
 
@@ -175,8 +175,8 @@ class AuthFlow {
    * @param {Boolean} provided_data.state_required - Option boolean declaring if the state is required.
    * @param {Boolean} provided_data.redirect_uri_required - Option boolean declaring if the redirect uri is required.
    * @param {String} provided_data.redirect_uris - The client redirect uris string separated by spaces.
-   * @param {Boolean} provided_data.refresh_token_expire_in - Refresh Token TTL - default is 7200 seconds
-   * @param {Boolean} provided_data.token_expire_in - Token TTL - default is 3600 seconds
+   * @param {Boolean} provided_data.refresh_token_expires_in - Refresh Token TTL - default is 7200 seconds
+   * @param {Boolean} provided_data.token_expires_in - Token TTL - default is 3600 seconds
    *
    */
   setProperties(provided_data = {}) {
@@ -187,12 +187,12 @@ class AuthFlow {
     this.grant_types = provided_data.grant_types;
     this.redirect_uri_required = provided_data.redirect_uri_required;
     this.redirect_uris = provided_data.redirect_uris;
-    this.refresh_token_expire_in =
-      provided_data.refresh_token_expire_in || 7200;
+    this.refresh_token_expires_in =
+      provided_data.refresh_token_expires_in || 7200;
     this.scope_required = provided_data.scope_required;
     this.scopes = provided_data.scopes;
     this.state_required = provided_data.state_required;
-    this.token_expire_in = provided_data.token_expire_in || 3600;
+    this.token_expires_in = provided_data.token_expires_in || 3600;
   }
 
   // ------------------------------------------------------------------------------------

@@ -112,7 +112,7 @@ Example of Authier Extension
    * Refresh Token TTL - default is 7200 seconds
    * @type {Number}
    */
-  refresh_token_expire_in;
+  refresh_token_expires_in;
 
   /**
    * Client's custom scopes string separated by spaces
@@ -136,7 +136,7 @@ Example of Authier Extension
    * Token TTL - default is 3600 seconds
    * @type {Number}
    */
-  token_expire_in;
+  token_expires_in;
 ```
 
 ### Example of Functions of Auth Flow Implemented
