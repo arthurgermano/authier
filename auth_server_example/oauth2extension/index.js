@@ -31,7 +31,7 @@ AuthFlow.prototype.generateToken = async function generateToken(
   options = {}
 ) {
   return await signToken({
-    exp: Math.floor(Date.now() / 1000) + this.client.token_expires_in,
+    exp: Math.floor(Date.now() / 1000) + this.token_expires_in,
     sub: options.sub,
     iss: this.issuer || options.iss,
     scopes: token_data.scopes || "",
@@ -58,7 +58,7 @@ AuthorizationCodeFlow.prototype.generateCode = async function generateToken(
   options = {}
 ) {
   return await signToken({
-    exp: options.exp || Math.floor(Date.now() / 1000) + 55 * 5,
+    exp: options.exp || Math.floor(Date.now() / 1000) + 55 * this.code_expires_in,
     sub: options.sub,
     iss: this.issuer || options.iss,
     scopes: code_data.scopes || "",
@@ -85,7 +85,7 @@ AuthorizationCodeFlow.prototype.validateCode = async function validateCode(
 RefreshTokenFlow.prototype.generateRefreshToken =
   async function generateRefreshToken(refresh_token_data, options = {}) {
     return await signToken({
-      exp: Math.floor(Date.now() / 1000) + this.client.refresh_token_expires_in,
+      exp: Math.floor(Date.now() / 1000) + this.refresh_token_expires_in,
       sub: options.sub,
       iss: this.issuer || options.iss,
       scopes: refresh_token_data.scopes || "",

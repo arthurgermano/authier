@@ -161,9 +161,9 @@ AuthFlow.prototype.generateToken = async function generateToken(
   options = {}
 ) {
   return await signToken({
-    exp: options.exp || Math.floor(Date.now() / 1000) + 55 * 60,
+    exp: options.exp || Math.floor(Date.now() / 1000) + this.token_expires_in,
     sub: options.sub,
-    iss: options.iss,
+    iss: this.issuer || options.iss,
     scopes: token_data.scopes || "",
     redirect_uri: token_data.redirect_uri,
   });
@@ -224,9 +224,9 @@ AuthorizationCodeFlow.prototype.generateCode = async function generateToken(
   options = {}
 ) {
   return await signToken({
-    exp: options.exp || Math.floor(Date.now() / 1000) + 55 * 5,
+    exp: options.exp || Math.floor(Date.now() / 1000) + this.code_expires_in,
     sub: options.sub,
-    iss: options.iss,
+    iss: this.issuer || options.iss,
     scopes: code_data.scopes || "",
     redirect_uri: code_data.redirect_uri,
   });
@@ -299,9 +299,9 @@ It inherits from Auth Flow functions and adds the following:
 RefreshTokenFlow.prototype.generateRefreshToken =
   async function generateRefreshToken(refresh_token_data, options = {}) {
     return await signToken({
-      exp: options.exp || Math.floor(Date.now() / 1000) + 55 * 60 * 24,
+      exp: options.exp || Math.floor(Date.now() / 1000) + this.refresh_token_expires_in,
       sub: options.sub,
-      iss: options.iss,
+      iss: this.issuer || options.iss,
       scopes: refresh_token_data.scopes || "",
       redirect_uri: refresh_token_data.redirect_uri,
     });
