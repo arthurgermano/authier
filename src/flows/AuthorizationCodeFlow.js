@@ -137,13 +137,6 @@ class AuthorizationCodeFlow extends AuthFlow {
         provided_data.redirect_uri
       );
 
-      if (provided_data.code !== this.code) {
-        throw {
-          ...ERRORS.INVALID_REQUEST,
-          error_description: "The code is different from the last provided",
-        };
-      }
-
       options.code_validation = await this.validateCode(provided_data.code);
 
       return await this.generateToken(provided_data, options);
