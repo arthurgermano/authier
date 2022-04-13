@@ -63,14 +63,14 @@ class AuthorizationCodeFlow extends AuthFlow {
    *
    * @return {String} code - the code of Authorize Code Flow
    */
-  async getCodeResponse(provided_data, options) {
+  async getCodeResponse(provided_data, options = {}) {
     if (!provided_data) {
       throw ERRORS.INVALID_REQUEST;
     }
     try {
       this.validateClientId(provided_data.client_id);
       codeResponse.validateResponse(provided_data.response_type);
-      this.validateUri(provided_data.redirect_uri);
+      this.validateUri(provided_data.redirect_uri, options.encoded_uri);
       this.validateScopes(provided_data.scopes);
       this.isStateValid(provided_data.state);
       this.code = await this.generateCode(provided_data, options);

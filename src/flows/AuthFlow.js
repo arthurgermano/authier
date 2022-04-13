@@ -131,9 +131,12 @@ class AuthFlow {
    * @throws TypeError
    * @throws InvalidRequest
    */
-  hasClientUri(redirect_uri) {
+  hasClientUri(redirect_uri, encoded = false) {
     const splitUrls = this.redirect_uris.split(" ");
-    const hasUrl = splitUrls.find(urlItem => urlItem === redirect_uri);
+    const uri = !encoded ? redirect_uri : encodeURIComponent(redirect_uri);
+    const hasUrl = splitUrls.find(
+      (urlItem) => (!encoded ? urlItem : encodeURIComponent(urlItem)) === uri
+    );
     if (!hasUrl) {
       throw {
         ...ERRORS.INVALID_REQUEST,
@@ -309,13 +312,13 @@ class AuthFlow {
    * @throws InvalidRequest
    * @throws TypeError
    */
-  validateUri(redirect_uri) {
+  validateUri(redirect_uri, encoded = false) {
     if (!this.redirect_uri_required && !redirect_uri) {
       return true;
     } else if (!this.redirect_uris) {
       throw ERRORS.INVALID_CLIENT;
     }
-    this.hasClientUri(redirect_uri);
+    this.hasClientUri(redirect_uri, encoded);
   }
 
   // ------------------------------------------------------------------------------------
