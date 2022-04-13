@@ -307,6 +307,7 @@ class AuthFlow {
    * Summary. Validates if the redirect_uri provided are correct only if required or provided
    *
    * @param {String} redirect_uri - The redirect_uri string provided in the request.
+   * @param {String} encoded - IF the redirect_uri should be URIEncoded before check.
    *
    * @throws InvalidClient
    * @throws InvalidRequest
