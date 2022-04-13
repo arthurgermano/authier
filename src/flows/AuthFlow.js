@@ -132,7 +132,9 @@ class AuthFlow {
    * @throws InvalidRequest
    */
   hasClientUri(redirect_uri) {
-    if (!this.redirect_uris.includes(redirect_uri)) {
+    const splitUrls = this.redirect_uris.split(" ");
+    const hasUrl = splitUrls.find(urlItem => urlItem === redirect_uri);
+    if (!hasUrl) {
       throw {
         ...ERRORS.INVALID_REQUEST,
         error_description: "The redirect_uri is invalid",
