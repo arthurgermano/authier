@@ -14,16 +14,16 @@ Authier is a simple library helper to make it easier to implement and serve auth
   - [Test It](#test-it)
   - [Example](#example)
   - [Auth Flow](#auth-flow)
-    - [Fields](#fields)
+    - [Fields of Client](#fields-of-client)
     - [Example of Functions of Auth Flow Implemented](#example-of-functions-of-auth-flow-implemented)
   - [Client Credentials Flow](#client-credentials-flow)
-    - [Fields](#fields-1)
+    - [Fields of Code](#fields-of-code)
     - [Example of Functions of Code Flow Implemented](#example-of-functions-of-code-flow-implemented)
   - [Code Flow](#code-flow)
-    - [Fields](#fields-2)
+    - [Fields of Code](#fields-of-code-1)
     - [Example of Functions of Code Flow Implemented](#example-of-functions-of-code-flow-implemented-1)
   - [Password Flow](#password-flow)
-    - [Fields](#fields-3)
+    - [Fields of Password](#fields-of-password)
     - [Example of Functions of Password Flow Implemented](#example-of-functions-of-password-flow-implemented)
   - [Refresh Token Flow](#refresh-token-flow)
     - [Example of Functions of Refresh Token Flow Implemented](#example-of-functions-of-refresh-token-flow-implemented)
@@ -63,12 +63,36 @@ Example of Authier Extension
 
 ## Auth Flow
 
-### Fields
+### Fields of Client
 
 ```js
   /**
+   * Client's identification string.
+   * @type {String}
+   */
+  client_id;
+
+  /**
+   * Client's secret string.
+   * @type {String}
+   */
+  client_secret;
+
+  /**
+   * Grant types granted for this client
+   * @type {String}
+   */
+  grant_types;
+
+  /**
+   * Token issuer identification.
+   * @type {String}
+   */
+  issuer;
+
+  /**
    * Client option to issue or not a refresh client token - default is true
-   * @type {Boolean}
+   * @type {String}
    */
   issues_refresh_token;
 
@@ -77,6 +101,24 @@ Example of Authier Extension
    * @type {Boolean}
    */
   redirect_uri_required;
+
+  /**
+   * Client's redirect uris string separated by spaces
+   * @type {String}
+   */
+  redirect_uris;
+
+  /**
+   * Refresh Token TTL - default is 7200 seconds
+   * @type {Number}
+   */
+  refresh_token_expires_in;
+
+  /**
+   * Client's custom scopes string separated by spaces
+   * @type {String}
+   */
+  scopes;
 
   /**
    * Client's option whether the scope is required
@@ -91,37 +133,39 @@ Example of Authier Extension
   state_required;
 
   /**
-   * Refresh Token TTL - default is 7200 seconds
-   * @type {Number}
-   */
-  refresh_token_expires_in;
-
-  /**
    * Token TTL - default is 3600 seconds
    * @type {Number}
    */
   token_expires_in;
-
-  /**
-   * Match all scope option
-   * @param {Object}
-   */
-  match_all_scopes;
 ```
 
 ### Example of Functions of Auth Flow Implemented
 
 ```js
+// --------------------------  AUTH FLOW FUNCTIONS  -----------------------------------
+
+AuthFlow.prototype.findClient = async function findClient(client_id) {
+  const clients = await getClients();
+  const client = clients.find((cItem) => cItem.client_id === client_id);
+  if (!client) {
+    throw OAuth2Lib.Errors.INVALID_CLIENT;
+  }
+  this.setProperties(client);
+  return client;
+};
 
 // ------------------------------------------------------------------------------------
 
-AuthFlow.prototype.generateToken = async function generateToken(args) {
+AuthFlow.prototype.generateToken = async function generateToken(
+  token_data,
+  options = {}
+) {
   return await signToken({
-    exp: Math.floor(Date.now() / 1000) + this.token_expires_in,
-    sub: args.token_info.sub,
-    iss: args.token_info.iss,
-    scopes: args.scopes_granted || "",
-    redirect_uri: args.redirect_uri, // present only in authorization code flow
+    exp: options.exp || Math.floor(Date.now() / 1000) + this.token_expires_in,
+    sub: options.sub,
+    iss: this.issuer || options.iss,
+    scopes: token_data.scopes || "",
+    redirect_uri: token_data.redirect_uri,
   });
 };
 
@@ -142,7 +186,7 @@ AuthFlow.prototype.validateToken = async function validateToken(token) {
 <hr />
 
 ## Client Credentials Flow
-### Fields
+### Fields of Code
 It inherits from Auth Flow fields
 
 ### Example of Functions of Code Flow Implemented
@@ -151,7 +195,7 @@ There is no need to implement functions as long as you implemented Auth Flow Fun
 <hr />
 
 ## Code Flow
-### Fields
+### Fields of Code
 It inherits from Auth Flow fields and adds the following:
 
 ```js
@@ -160,18 +204,12 @@ It inherits from Auth Flow fields and adds the following:
    * @type {String}
    */
   code;
-
+  
   /**
    * Authorization Code TTL - Default is 5 minutes.
    * @type {Number}
    */
   code_expires_in;
-
-  /**
-   * is_uri_encoded - Whether the redirect_uri is encoded or not
-   * @param {String}
-   */
-  is_uri_encoded;
 ```
 
 ### Example of Functions of Code Flow Implemented
@@ -182,14 +220,15 @@ It inherits from Auth Flow functions and adds the following:
 // --------------------------  AUTHORIZATION CODE FUNCTIONS  --------------------------
 
 AuthorizationCodeFlow.prototype.generateCode = async function generateToken(
-  args
+  code_data,
+  options = {}
 ) {
   return await signToken({
-    exp: Math.floor(Date.now() / 1000) + 55 * this.code_expires_in,
-    sub: args.code_info.sub,
-    iss: args.code_info.iss,
-    scopes: args.scopes_granted || "",
-    redirect_uri: args.redirect_uri,
+    exp: options.exp || Math.floor(Date.now() / 1000) + this.code_expires_in,
+    sub: options.sub,
+    iss: this.issuer || options.iss,
+    scopes: code_data.scopes || "",
+    redirect_uri: code_data.redirect_uri,
   });
 };
 
@@ -211,12 +250,42 @@ AuthorizationCodeFlow.prototype.validateCode = async function validateCode(
 <hr />
 
 ## Password Flow
-### Fields
-It inherits from Auth Flow fields.
+### Fields of Password
+It inherits from Auth Flow fields and adds the following:
+
+```js
+  /**
+   * Password flow user_name string.
+   * @type {String}
+   */
+  user_name;
+  
+  /**
+   * Password flow password string.
+   * @type {String}
+   */
+  password;
+```
 
 ### Example of Functions of Password Flow Implemented
 
-It inherits from Auth Flow functions.
+It inherits from Auth Flow functions and adds the following:
+
+```js
+// --------------------------  PASSWORD FUNCTIONS  ------------------------------------
+
+PasswordFlow.prototype.findResource = async function findResource(user_name) {
+  const resources = await getResources();
+  const resource = resources.find((rItem) => rItem.user_name === user_name);
+  if (!resource) {
+    throw OAuth2Lib.Errors.ACCESS_DENIED;
+  }
+  this.setProperties({ ...resource, grant_types: "password" });
+  return resource;
+};
+
+// ------------------------------------------------------------------------------------
+```
 
 ## Refresh Token Flow
 
@@ -228,12 +297,13 @@ It inherits from Auth Flow functions and adds the following:
 // --------------------------  REFRESH TOKEN FUNCTIONS  -------------------------------
 
 RefreshTokenFlow.prototype.generateRefreshToken =
-  async function generateRefreshToken(args) {
+  async function generateRefreshToken(refresh_token_data, options = {}) {
     return await signToken({
-      exp: Math.floor(Date.now() / 1000) + this.refresh_token_expires_in,
-      sub: args.token_info.sub,
-      iss: args.token_info.iss,
-      scopes: args.scopes_granted || "",
+      exp: options.exp || Math.floor(Date.now() / 1000) + this.refresh_token_expires_in,
+      sub: options.sub,
+      iss: this.issuer || options.iss,
+      scopes: refresh_token_data.scopes || "",
+      redirect_uri: refresh_token_data.redirect_uri,
     });
   };
 

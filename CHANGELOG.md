@@ -1,5 +1,18 @@
 # Authier Changelog
 
+## 2.0.0
+
+  - new way of handling flows 
+  - 100% unit test coverage
+  - dropped support for old versions of Authier
+  - dropped findClient method usage
+  - new assignature of flows
+
+## 1.0.7
+
+ - fixing several bugs
+ - added new fields
+
 ## 1.0.1
 
 - New fields added to AuthFlow Class.

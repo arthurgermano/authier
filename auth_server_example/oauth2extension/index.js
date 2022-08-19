@@ -1,45 +1,23 @@
 const OAuth2Lib = require("authier");
 const AuthFlow = OAuth2Lib.AuthFlow;
 const AuthorizationCodeFlow = OAuth2Lib.AuthorizationCodeFlow;
-const PasswordFlow = OAuth2Lib.PasswordFlow;
 const RefreshTokenFlow = OAuth2Lib.RefreshTokenFlow;
-const {
-  checkToken,
-  getClients,
-  signToken,
-  getResources,
-} = require("./utils.js");
+const { checkToken, signToken } = require("./utils.js");
 
-// --------------------------  PROTOTYPE FUNCTIONS  -----------------------------------
+// --------------------------  PROTOTYPE FUNCTIONS  -----------------------------------------------
+// ------------------------------------------------------------------------------------------------
 
-// --------------------------  AUTH FLOW FUNCTIONS  -----------------------------------
-
-AuthFlow.prototype.findClient = async function findClient(client_id) {
-  const clients = await getClients();
-  const client = clients.find((cItem) => cItem.client_id === client_id);
-  if (!client) {
-    throw OAuth2Lib.Errors.INVALID_CLIENT;
-  }
-  this.setProperties(client);
-  return client;
-};
-
-// ------------------------------------------------------------------------------------
-
-AuthFlow.prototype.generateToken = async function generateToken(
-  token_data,
-  options = {}
-) {
+AuthFlow.prototype.generateToken = async function generateToken(args) {
   return await signToken({
     exp: Math.floor(Date.now() / 1000) + this.token_expires_in,
-    sub: options.sub,
-    iss: this.issuer || options.iss,
-    scopes: token_data.scopes || "",
-    redirect_uri: token_data.redirect_uri,
+    sub: args.token_info.sub,
+    iss: args.token_info.iss,
+    scopes: args.scopes_granted || "",
+    redirect_uri: args.redirect_uri, // present only in authorization code flow
   });
 };
 
-// ------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
 
 AuthFlow.prototype.validateToken = async function validateToken(token) {
   try {
@@ -49,24 +27,23 @@ AuthFlow.prototype.validateToken = async function validateToken(token) {
   }
 };
 
-// ------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
 
-// --------------------------  AUTHORIZATION CODE FUNCTIONS  --------------------------
+// --------------------------  AUTHORIZATION CODE FUNCTIONS  --------------------------------------
 
 AuthorizationCodeFlow.prototype.generateCode = async function generateToken(
-  code_data,
-  options = {}
+  args
 ) {
   return await signToken({
-    exp: options.exp || Math.floor(Date.now() / 1000) + 55 * this.code_expires_in,
-    sub: options.sub,
-    iss: this.issuer || options.iss,
-    scopes: code_data.scopes || "",
-    redirect_uri: code_data.redirect_uri,
+    exp: Math.floor(Date.now() / 1000) + 55 * this.code_expires_in,
+    sub: args.code_info.sub,
+    iss: args.code_info.iss,
+    scopes: args.scopes_granted || "",
+    redirect_uri: args.redirect_uri,
   });
 };
 
-// ------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
 
 AuthorizationCodeFlow.prototype.validateCode = async function validateCode(
   code
@@ -78,22 +55,21 @@ AuthorizationCodeFlow.prototype.validateCode = async function validateCode(
   }
 };
 
-// ------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
 
-// --------------------------  REFRESH TOKEN FUNCTIONS  -------------------------------
+// --------------------------  REFRESH TOKEN FUNCTIONS  -------------------------------------------
 
 RefreshTokenFlow.prototype.generateRefreshToken =
-  async function generateRefreshToken(refresh_token_data, options = {}) {
+  async function generateRefreshToken(args) {
     return await signToken({
       exp: Math.floor(Date.now() / 1000) + this.refresh_token_expires_in,
-      sub: options.sub,
-      iss: this.issuer || options.iss,
-      scopes: refresh_token_data.scopes || "",
-      redirect_uri: refresh_token_data.redirect_uri,
+      sub: args.token_info.sub,
+      iss: args.token_info.iss,
+      scopes: args.scopes_granted || "",
     });
   };
 
-// ------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
 
 RefreshTokenFlow.prototype.validateRefreshToken =
   async function validateRefreshToken(refresh_token) {
@@ -104,20 +80,6 @@ RefreshTokenFlow.prototype.validateRefreshToken =
     }
   };
 
-// ------------------------------------------------------------------------------------
-
-// --------------------------  PASSWORD FUNCTIONS  ------------------------------------
-
-PasswordFlow.prototype.findResource = async function findResource(user_name) {
-  const resources = await getResources();
-  const resource = resources.find((rItem) => rItem.user_name === user_name);
-  if (!resource) {
-    throw OAuth2Lib.Errors.ACCESS_DENIED;
-  }
-  this.setProperties({ ...resource, grant_types: "password" });
-  return resource;
-};
-
-// ------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
 
 module.exports = OAuth2Lib;

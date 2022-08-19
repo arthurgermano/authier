@@ -4,6 +4,7 @@ const fastify = require("fastify")({
 });
 const fs = require("fs");
 const OAuth2Lib = require("./oauth2extension");
+const { clientData } = require("./oauth2extension/utils.js");
 
 // Declare a route
 fastify.get("/", function (request, reply) {
@@ -22,7 +23,8 @@ fastify.listen(3000, async function (err, address) {
   await TestPassword();
   await TestRefreshToken();
 
-  fastify.log.info(`server listening on ${address}`);
+  fastify.log.info(`server listened on ${address}`);
+  process.exit(0);
 });
 
 function getClients() {
@@ -36,18 +38,16 @@ async function TestAuthCode() {
     console.log("AUTHORIZATION CODE FLOW START");
     console.log("------------------------------");
     const authCode = new OAuth2Lib.AuthorizationCodeFlow();
-    await authCode.findClient("abcxyz");
 
     console.log("------------------------------");
-    console.log("CLIENT PROPERTIES");
-    console.log(authCode.getProperties());
-    console.log("------------------------------");
-    const code = await authCode.getCodeResponse({
-      client_id: "abcxyz",
+    const code = await authCode.getCode({
       response_type: "code",
+      client_redirect_uris: clientData.redirect_uris.split(" "),
       redirect_uri: "http://localhost:3000/cb",
-      state: "abc123",
-      scopes: "scopeA",
+      requested_scopes: ["scopeA"],
+      client_scopes: clientData.scopes.split(" "),
+      state: "stateABCZYX",
+      code_info: { sub: "12345" },
     });
     console.log("------------------------------");
     console.log("CODE");
@@ -61,12 +61,13 @@ async function TestAuthCode() {
     console.log("------------------------------");
 
     const token = await authCode.getToken({
-      client_id: "abcxyz",
-      code,
-      grant_type: "authorization_code",
+      code: code,
+      client_grant_types: clientData.grant_types.split(" "),
+      client_scopes: clientData.scopes.split(" "),
+      scopes_requested: ["scopeA"],
+      client_redirect_uris: clientData.redirect_uris.split(" "),
       redirect_uri: "http://localhost:3000/cb",
-      code_requested_uri: codeValidated.redirect_uri,
-      scopes: codeValidated.scopes,
+      token_info: { sub: "12345" },
     });
 
     console.log("------------------------------");
@@ -88,16 +89,12 @@ async function TestClientCredentials() {
     console.log("CLIENT CREDENTIALS FLOW START");
     console.log("------------------------------");
     const clientCredentials = new OAuth2Lib.ClientCredentialsFlow();
-    await clientCredentials.findClient("abcxyz");
-    console.log("------------------------------");
-    console.log("CLIENT PROPERTIES");
-    console.log(clientCredentials.getProperties());
     console.log("------------------------------");
     const token = await clientCredentials.getToken({
-      client_id: "abcxyz",
-      client_secret: "abcxyz2",
-      grant_type: "client_credentials",
-      scopes: "scopeA scopeB",
+      client_grant_types: clientData.grant_types.split(" "),
+      client_scopes: clientData.scopes.split(" "),
+      scopes_requested: ["scopeA"],
+      token_info: { sub: "12345" },
     });
     console.log("------------------------------");
     console.log("TOKEN");
@@ -110,7 +107,6 @@ async function TestClientCredentials() {
     console.log("CLIENT CREDENTIALS FLOW END");
     console.log("------------------------------\n\n");
   }
-  console.log(OAuth2Lib.GrantTypes.getSupportedGrantTypes());
 }
 
 async function TestPassword() {
@@ -119,14 +115,12 @@ async function TestPassword() {
     console.log("PASSWORD FLOW START");
     console.log("------------------------------");
     const passwordFlow = new OAuth2Lib.PasswordFlow();
-    await passwordFlow.findResource("abcxyz2");
-    console.log("RESOURCE PROPERTIES");
-    console.log(passwordFlow.getProperties());
     console.log("------------------------------");
     const token = await passwordFlow.getToken({
-      user_name: "abcxyz2",
-      password: "abcxyz2",
-      grant_type: "password",
+      client_grant_types: clientData.grant_types.split(" "),
+      client_scopes: clientData.scopes.split(" "),
+      scopes_requested: ["scopeA"],
+      token_info: { sub: "12345" },
     });
     console.log("------------------------------");
     console.log("TOKEN");
@@ -147,15 +141,11 @@ async function TestRefreshToken() {
     console.log("REFRESH TOKEN FLOW START");
     console.log("------------------------------");
     const refreshTokenFlow = new OAuth2Lib.RefreshTokenFlow();
-    await refreshTokenFlow.findClient("abcxyz");
-    console.log("RESOURCE PROPERTIES");
-    console.log(refreshTokenFlow.getProperties());
-    console.log("------------------------------");
     const token = await refreshTokenFlow.getToken({
-      client_id: "abcxyz",
-      client_secret: "abcxyz",
-      grant_type: "refresh_token",
-      scopes: "scopeA scopeB",
+      client_grant_types: clientData.grant_types.split(" "),
+      client_scopes: clientData.scopes.split(" "),
+      scopes_requested: ["scopeA"],
+      token_info: { sub: "12345" },
     });
     console.log("------------------------------");
     console.log("TOKEN");

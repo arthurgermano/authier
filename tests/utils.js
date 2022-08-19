@@ -3,10 +3,10 @@ const path = require("path");
 const jwt = require("jsonwebtoken");
 
 const privateKey = fs.readFileSync(
-  path.resolve(__dirname, "../../keys/jwtRS512.key")
+  path.resolve(__dirname, "../keys/jwtRS512.key")
 );
 const publicKey = fs.readFileSync(
-  path.resolve(__dirname, "../../keys/jwtRS512.key.pub")
+  path.resolve(__dirname, "../keys/jwtRS512.key.pub")
 );
 
 const clientData = {

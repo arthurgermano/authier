@@ -83,6 +83,16 @@ const UNSUPPORTED_RESPONSE_TYPE = {
   status: 400,
 };
 
+function throwError(error, more_info) {
+  if (typeof error !== "object") {
+    throw {
+      ...SERVER_ERROR,
+      exception: "throwError(): error must be a valid object",
+    };
+  }
+  throw { ...error, more_info };
+}
+
 module.exports = {
   ACCESS_DENIED,
   INVALID_CLIENT,
@@ -95,4 +105,5 @@ module.exports = {
   TODO_ERROR,
   UNSUPPORTED_GRANT_TYPE,
   UNSUPPORTED_RESPONSE_TYPE,
+  throwError,
 };

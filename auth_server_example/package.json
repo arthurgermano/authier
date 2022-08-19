@@ -1,15 +1,15 @@
 {
   "name": "auth_server_example",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Arthur J.Germano",
+  "license": "MIT",
   "dependencies": {
-    "authier": "^1.0.0",
+    "authier": "^2.0.0",
     "fastify": "^3.19.1",
     "jsonwebtoken": "^8.5.1"
   }
