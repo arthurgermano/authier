@@ -12,10 +12,7 @@ const {
  * @throws ServerError | UnsupportedGrantType
  * @returns {Boolean} - True if the client's grant types has the requested grant type.
  */
-function validateGrant(
-  requested_grant_type,
-  expected_grant_types = []
-) {
+function validateGrant(requested_grant_type, expected_grant_types = []) {
   if (typeof requested_grant_type !== "string") {
     throwError(
       SERVER_ERROR,

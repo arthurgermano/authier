@@ -5,7 +5,6 @@ const errors = require("./errors/index.js");
 const AuthFlow = require("./flows/AuthFlow.js");
 const AuthorizationCodeFlow = require("./flows/AuthorizationCodeFlow.js");
 const ClientCredentialsFlow = require("./flows/ClientCredentialsFlow.js");
-const PasswordFlow = require("./flows/PasswordFlow.js");
 const RefreshTokenFlow = require("./flows/RefreshTokenFlow.js");
 
 // grants
@@ -18,7 +17,6 @@ module.exports = {
   AuthFlow,
   AuthorizationCodeFlow,
   ClientCredentialsFlow,
-  PasswordFlow,
   RefreshTokenFlow,
   errors,
   grantTypes,

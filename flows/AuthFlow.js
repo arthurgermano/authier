@@ -2,55 +2,61 @@ const {
   INVALID_REQUEST,
   SERVER_ERROR,
   INVALID_SCOPE,
+  TODO_ERROR,
   throwError,
 } = require("../errors/index.js");
 
-// ------------------------------------------------------------------------------------------------
+const { returnDefaultValue } = require('../common');
 
-function returnDefaultValue(value, defaultValue) {
-  return value !== undefined ? value : defaultValue;
-}
+// ------------------------------------------------------------------------------------------------
 
 class AuthFlow {
   /**
    * Client option to issue or not a refresh client token - default is true
    * @type {Boolean}
+   * @default true
    */
   issues_refresh_token;
 
   /**
    * Client's option whether the redirect_uri is required
    * @type {Boolean}
+   * @default true
    */
   redirect_uri_required;
 
   /**
    * Client's option whether the scope is required
    * @type {Boolean}
+   * @default false
    */
   scope_required;
 
   /**
    * Client's option whether the state is required
    * @type {Boolean}
+   * @default true
    */
   state_required;
 
   /**
    * Refresh Token TTL - default is 7200 seconds
    * @type {Number}
+   * @default 7200
    */
   refresh_token_expires_in;
 
   /**
    * Token TTL - default is 3600 seconds
    * @type {Number}
+   * @default 3600
    */
   token_expires_in;
 
   /**
    * Match all scope option
-   * @param {Object}
+   * @param {Boolean}
+   * @default true
    */
   match_all_scopes;
 
@@ -209,7 +215,7 @@ class AuthFlow {
    * @returns {Object} - The token generated
    */
   async generateToken(scopes_granted, token_info) {
-    throwError(SERVER_ERROR, "generateToken(): not implemented yet!");
+    throwError(TODO_ERROR, "generateToken(): not implemented yet!");
   }
 
   // ----------------------------------------------------------------------------------------------
@@ -221,7 +227,7 @@ class AuthFlow {
    * @returns {Boolean} - True if the token is valid
    */
   async validateToken(token_info) {
-    throwError(SERVER_ERROR, "validateToken(): not implemented yet!");
+    throwError(TODO_ERROR, "validateToken(): not implemented yet!");
   }
 
   // ----------------------------------------------------------------------------------------------
@@ -233,7 +239,7 @@ class AuthFlow {
    * @returns {Boolean} - True if the token is valid
    */
   async getToken({ params }) {
-    throwError(SERVER_ERROR, "getToken(): not implemented yet!");
+    throwError(TODO_ERROR, "getToken(): not implemented yet!");
   }
 }
 // ------------------------------------------------------------------------------------------------

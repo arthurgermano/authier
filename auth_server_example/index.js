@@ -19,8 +19,8 @@ fastify.listen(3000, async function (err, address) {
   }
 
   await TestAuthCode();
+  await TestAuthCodePKCE();
   await TestClientCredentials();
-  await TestPassword();
   await TestRefreshToken();
 
   fastify.log.info(`server listened on ${address}`);
@@ -37,7 +37,9 @@ async function TestAuthCode() {
     console.log("------------------------------");
     console.log("AUTHORIZATION CODE FLOW START");
     console.log("------------------------------");
-    const authCode = new OAuth2Lib.AuthorizationCodeFlow();
+    const authCode = new OAuth2Lib.AuthorizationCodeFlow({
+      pcke_required: false,
+    });
 
     console.log("------------------------------");
     const code = await authCode.getCode({
@@ -83,6 +85,63 @@ async function TestAuthCode() {
   }
 }
 
+async function TestAuthCodePKCE() {
+  try {
+    console.log("------------------------------");
+    console.log("AUTHORIZATION CODE FLOW WITH PKCE START");
+    console.log("------------------------------");
+    const authCode = new OAuth2Lib.AuthorizationCodeFlow();
+
+    console.log("------------------------------");
+    const code = await authCode.getCode({
+      response_type: "code",
+      client_redirect_uris: clientData.redirect_uris.split(" "),
+      redirect_uri: "http://localhost:3000/cb",
+      requested_scopes: ["scopeA"],
+      client_scopes: clientData.scopes.split(" "),
+      state: "stateABCZYX",
+      code_info: { sub: "12345" },
+      code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
+      code_challenge_method: "S256",
+    });
+    console.log("------------------------------");
+    console.log("CODE");
+    console.log(code);
+    console.log("------------------------------");
+
+    const codeValidated = await authCode.validateCode(code);
+    console.log("------------------------------");
+    console.log("VALIDATING CODE");
+    console.log(codeValidated);
+    console.log("------------------------------");
+
+    const token = await authCode.getToken({
+      code: code,
+      client_grant_types: clientData.grant_types.split(" "),
+      client_scopes: clientData.scopes.split(" "),
+      scopes_requested: ["scopeA"],
+      client_redirect_uris: clientData.redirect_uris.split(" "),
+      redirect_uri: "http://localhost:3000/cb",
+      token_info: { sub: "12345" },
+      code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
+      code_challenge_method: "S256",
+      code_verifier:
+        "BB32OXv3qmG6OIe3sTZHjbbP3NW.wltvQ_k73ZHlA42uELwbqX3Xlm4jx_Bv8QQN3sBHMW2c2NSyDYuB0YUFTV2-XjwbfCOK8F_UfbU~72EWJ0dGFOs2.9~giG0TEFXk",
+    });
+
+    console.log("------------------------------");
+    console.log("TOKEN");
+    console.log(token);
+    console.log("------------------------------");
+  } catch (err) {
+    console.log(err);
+  } finally {
+    console.log("------------------------------");
+    console.log("AUTHORIZATION CODE FLOW WITH PKCE END");
+    console.log("------------------------------\n\n");
+  }
+}
+
 async function TestClientCredentials() {
   try {
     console.log("------------------------------");
@@ -109,37 +168,12 @@ async function TestClientCredentials() {
   }
 }
 
-async function TestPassword() {
-  try {
-    console.log("------------------------------");
-    console.log("PASSWORD FLOW START");
-    console.log("------------------------------");
-    const passwordFlow = new OAuth2Lib.PasswordFlow();
-    console.log("------------------------------");
-    const token = await passwordFlow.getToken({
-      client_grant_types: clientData.grant_types.split(" "),
-      client_scopes: clientData.scopes.split(" "),
-      scopes_requested: ["scopeA"],
-      token_info: { sub: "12345" },
-    });
-    console.log("------------------------------");
-    console.log("TOKEN");
-    console.log(token);
-    console.log("------------------------------");
-  } catch (err) {
-    console.log(err);
-  } finally {
-    console.log("------------------------------");
-    console.log("PASSWORD FLOW END");
-    console.log("------------------------------\n\n");
-  }
-}
-
 async function TestRefreshToken() {
   try {
     console.log("------------------------------");
     console.log("REFRESH TOKEN FLOW START");
     console.log("------------------------------");
+    
     const refreshTokenFlow = new OAuth2Lib.RefreshTokenFlow();
     const token = await refreshTokenFlow.getToken({
       client_grant_types: clientData.grant_types.split(" "),

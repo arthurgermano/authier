@@ -1,8 +1,4 @@
-const {
-  UNSUPPORTED_RESPONSE_TYPE,
-  SERVER_ERROR,
-  throwError,
-} = require("../errors/index.js");
+const { SERVER_ERROR, throwError } = require("../errors/index.js");
 
 // ------------------------------------------------------------------------------------------------
 

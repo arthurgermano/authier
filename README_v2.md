@@ -22,6 +22,9 @@ Authier is a simple library helper to make it easier to implement and serve auth
   - [Code Flow](#code-flow)
     - [Fields](#fields-2)
     - [Example of Functions of Code Flow Implemented](#example-of-functions-of-code-flow-implemented-1)
+  - [Password Flow](#password-flow)
+    - [Fields](#fields-3)
+    - [Example of Functions of Password Flow Implemented](#example-of-functions-of-password-flow-implemented)
   - [Refresh Token Flow](#refresh-token-flow)
     - [Example of Functions of Refresh Token Flow Implemented](#example-of-functions-of-refresh-token-flow-implemented)
   - [Example of All Methods to be Implemented](#example-of-all-methods-to-be-implemented)
@@ -161,44 +164,14 @@ It inherits from Auth Flow fields and adds the following:
   /**
    * Authorization Code TTL - Default is 5 minutes.
    * @type {Number}
-   * @default 300
    */
   code_expires_in;
 
   /**
    * is_uri_encoded - Whether the redirect_uri is encoded or not
-   * @param {Boolean}
-   * @default false
+   * @param {String}
    */
   is_uri_encoded;
-
-  /**
-   * pcke_required - Whether the pcke is required or not
-   * @param {Boolean}
-   * @default true
-   */
-  pcke_required;
-
-  /**
-   * code_challenge_method - The code challenge method
-   * @param {String}
-   * @default S256
-   */
-  code_challenge_method;
-
-  /**
-   * mapping_challenge_methods - The mapper for code challenge methods
-   * @param {Object}
-   * @default { plain: "plain", "S256": "sha256" }
-   */
-  mapping_challenge_methods;
-
-  /**
-   * allow_plain_pkce_method - Whether the pcke plain method is allowed
-   * @param {Boolean}
-   * @default false
-   */
-  allow_plain_pkce_method;
 ```
 
 ### Example of Functions of Code Flow Implemented
@@ -236,6 +209,14 @@ AuthorizationCodeFlow.prototype.validateCode = async function validateCode(
 ```
 
 <hr />
+
+## Password Flow
+### Fields
+It inherits from Auth Flow fields.
+
+### Example of Functions of Password Flow Implemented
+
+It inherits from Auth Flow functions.
 
 ## Refresh Token Flow
 

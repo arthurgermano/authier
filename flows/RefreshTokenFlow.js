@@ -1,6 +1,7 @@
 const { validateGrant } = require("../grant_types/index.js");
-const { TODO_ERROR } = require("../errors/index.js");
+const { TODO_ERROR, throwError } = require("../errors/index.js");
 const AuthFlow = require("./AuthFlow.js");
+const { returnDefaultValue } = require("../common");
 
 // ------------------------------------------------------------------------------------------------
 
@@ -58,7 +59,7 @@ class RefreshTokenFlow extends AuthFlow {
   async generateRefreshToken({ scopes_granted, token_info }) {
     // Must generate a refresh_token
     // Must return the refresh_token as string as a promise
-    throw TODO_ERROR;
+    throwError(TODO_ERROR, "generateRefreshToken(): not implemented yet!");
   }
 
   // ----------------------------------------------------------------------------------------------
@@ -73,7 +74,7 @@ class RefreshTokenFlow extends AuthFlow {
     // Must validate the refresh_token
     // check it's signature, etc
     // Must return the validation info or throw an exception
-    throw TODO_ERROR;
+    throwError(TODO_ERROR, "validateRefreshToken(): not implemented yet!");
   }
 }
 

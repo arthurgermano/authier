@@ -1,6 +1,6 @@
 {
   "name": "authier",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "author": "Arthur José Germano",
   "license": "MIT",
   "main": "src/index.js",
@@ -12,7 +12,9 @@
     "authentication",
     "RFC6749",
     "grant",
-    "server"
+    "server",
+    "oauth2.1",
+    "oauth3"
   ],
   "repository": {
     "type": "git",
@@ -21,8 +23,8 @@
   "bugs": {
     "url": "https://github.com/arthurgermano/authier/issues"
   },
-  "devDependencies": {
-    "jsonwebtoken": "^8.5.1",
-    "vitest": "^0.21.1"
+  "dependencies": {
+    "jsonwebtoken": "^9.0.0",
+    "vitest": "^0.28.4"
   }
 }

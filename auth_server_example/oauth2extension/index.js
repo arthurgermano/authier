@@ -1,4 +1,4 @@
-const OAuth2Lib = require("authier");
+const OAuth2Lib = require("../../index");
 const AuthFlow = OAuth2Lib.AuthFlow;
 const AuthorizationCodeFlow = OAuth2Lib.AuthorizationCodeFlow;
 const RefreshTokenFlow = OAuth2Lib.RefreshTokenFlow;

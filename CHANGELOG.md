@@ -1,6 +1,12 @@
 # Authier Changelog
 
-## 2.0.0
+## 3.0.0
+
+  - dropped support for old versions of Authier
+  - added PKCE support for authorization code
+  - dropped password code flow
+
+## 2.0.1
 
   - new way of handling flows 
   - 100% unit test coverage
