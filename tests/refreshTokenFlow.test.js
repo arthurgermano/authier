@@ -24,7 +24,7 @@ beforeEach(() => {
 
 // ------------------------------------------------------------------------------------------------
 
-describe("passwordFlow", () => {
+describe("refreshTokenFlow", () => {
   it("constructor() - generating a new RefreshTokenFlow with options", () => {
     crtFlow = new RefreshTokenFlow({
       scope_required: true,
