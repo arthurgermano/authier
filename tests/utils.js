@@ -3,17 +3,17 @@ const path = require("path");
 const jwt = require("jsonwebtoken");
 
 const privateKey = fs.readFileSync(
-  path.resolve(__dirname, "../keys/jwtRS512.key")
+  path.resolve(__dirname, "./keys/jwtRS512.key")
 );
 const publicKey = fs.readFileSync(
-  path.resolve(__dirname, "../keys/jwtRS512.key.pub")
+  path.resolve(__dirname, "./keys/jwtRS512.key.pub")
 );
 
 const clientData = {
   client_id: "abcxyz",
   client_secret: "abcxyz2",
   grant_types:
-    "client_credentials authorization_code implicit password refresh_token",
+    "client_credentials authorization_code refresh_token",
   redirect_uris: "http://localhost:3000/cb http://localhost:3000/cb2 http://localhost:3000/cb3",
   scopes: "scopeA scopeB",
   scope_required: true,

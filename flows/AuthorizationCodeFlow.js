@@ -29,11 +29,11 @@ class AuthorizationCodeFlow extends AuthFlow {
   is_uri_encoded;
 
   /**
-   * pcke_required - Whether the pcke is required or not
+   * pkce_required - Whether the pkce is required or not
    * @param {Boolean}
    * @default true
    */
-  pcke_required;
+  pkce_required;
 
   /**
    * code_challenge_method - The code challenge method
@@ -50,7 +50,7 @@ class AuthorizationCodeFlow extends AuthFlow {
   mapping_challenge_methods;
 
   /**
-   * allow_plain_pkce_method - Whether the pcke plain method is allowed
+   * allow_plain_pkce_method - Whether the pkce plain method is allowed
    * @param {Boolean}
    * @default false
    */
@@ -68,7 +68,7 @@ class AuthorizationCodeFlow extends AuthFlow {
     this.code = options.code;
     this.code_expires_in = returnDefaultValue(options.code_expires_in, 300);
     this.is_uri_encoded = returnDefaultValue(options.is_uri_encoded, false);
-    this.pcke_required = returnDefaultValue(options.pcke_required, true);
+    this.pkce_required = returnDefaultValue(options.pkce_required, true);
     this.code_challenge_method = returnDefaultValue(
       options.code_challenge_method,
       "S256"
@@ -127,7 +127,7 @@ class AuthorizationCodeFlow extends AuthFlow {
       if (this.state_required) {
         this.validateState(state, state);
       }
-      if (this.pcke_required) {
+      if (this.pkce_required) {
         this.validateCodeChallengeMethod(code_challenge_method);
         this.validateCodeChallenge(code_challenge);
       }
@@ -185,7 +185,7 @@ class AuthorizationCodeFlow extends AuthFlow {
         client_redirect_uris,
         this.is_uri_encoded
       );
-      if (this.pcke_required) {
+      if (this.pkce_required) {
         this.validateCodeVerifier(
           code_verifier,
           code_challenge,

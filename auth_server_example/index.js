@@ -38,7 +38,7 @@ async function TestAuthCode() {
     console.log("AUTHORIZATION CODE FLOW START");
     console.log("------------------------------");
     const authCode = new OAuth2Lib.AuthorizationCodeFlow({
-      pcke_required: false,
+      pkce_required: false,
     });
 
     console.log("------------------------------");

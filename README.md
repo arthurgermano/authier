@@ -173,11 +173,11 @@ It inherits from Auth Flow fields and adds the following:
   is_uri_encoded;
 
   /**
-   * pcke_required - Whether the pcke is required or not
+   * pkce_required - Whether the pkce is required or not
    * @param {Boolean}
    * @default true
    */
-  pcke_required;
+  pkce_required;
 
   /**
    * code_challenge_method - The code challenge method
@@ -194,7 +194,7 @@ It inherits from Auth Flow fields and adds the following:
   mapping_challenge_methods;
 
   /**
-   * allow_plain_pkce_method - Whether the pcke plain method is allowed
+   * allow_plain_pkce_method - Whether the pkce plain method is allowed
    * @param {Boolean}
    * @default false
    */
