@@ -1,6 +1,6 @@
 const { validateGrant } = require("../grant_types/index.js");
 const { validateResponse } = require("../response_types/index.js");
-const { TODO_ERROR, SERVER_ERROR, throwError } = require("../errors/index.js");
+const { TODO_ERROR, SERVER_ERROR, throwError, INVALID_REQUEST } = require("../errors/index.js");
 const { returnDefaultValue } = require("../common");
 const { createHash } = require("crypto");
 const AuthFlow = require("./AuthFlow.js");
@@ -36,13 +36,6 @@ class AuthorizationCodeFlow extends AuthFlow {
   pkce_required;
 
   /**
-   * code_challenge_method - The code challenge method
-   * @param {String}
-   * @default S256
-   */
-  code_challenge_method;
-
-  /**
    * mapping_challenge_methods - The mapper for code challenge methods
    * @param {Object}
    * @default { plain: "plain", "S256": "sha256" }
@@ -69,20 +62,22 @@ class AuthorizationCodeFlow extends AuthFlow {
     this.code_expires_in = returnDefaultValue(options.code_expires_in, 300);
     this.is_uri_encoded = returnDefaultValue(options.is_uri_encoded, false);
     this.pkce_required = returnDefaultValue(options.pkce_required, true);
-    this.code_challenge_method = returnDefaultValue(
-      options.code_challenge_method,
-      "S256"
-    );
+
+    // must be an object
     this.mapping_challenge_methods = returnDefaultValue(
-      options.mapping_challenge_methods,
-      { plain: "plain", S256: "sha256" }
+      typeof options.mapping_challenge_methods == "object"
+        ? options.mapping_challenge_methods
+        : undefined,
+      { S256: "sha256" }
     );
+
     this.allow_plain_pkce_method = returnDefaultValue(
       options.allow_plain_pkce_method,
       false
     );
-
-    this.validateCodeChallengeMethod(this.code_challenge_method);
+    if (this.allow_plain_pkce_method) {
+      this.mapping_challenge_methods.plain = "plain"
+    }
   }
 
   // ----------------------------------------------------------------------------------------------
@@ -106,7 +101,7 @@ class AuthorizationCodeFlow extends AuthFlow {
     client_scopes = [],
     state,
     code_challenge,
-    code_challenge_method,
+    code_challenge_method = "S256",
     code_info,
   }) {
     try {
@@ -169,7 +164,7 @@ class AuthorizationCodeFlow extends AuthFlow {
     token_info,
     code_verifier,
     code_challenge,
-    code_challenge_method,
+    code_challenge_method = "S256",
   }) {
     try {
       validateGrant("authorization_code", client_grant_types);
@@ -216,8 +211,8 @@ class AuthorizationCodeFlow extends AuthFlow {
     ).find((mcm) => mcm === code_challenge_method);
     if (!is_code_challenge_supported) {
       throwError(
-        SERVER_ERROR,
-        `The requested algorithm ${this.code_challenge_method} is not supported by this server!`
+        INVALID_REQUEST,
+        `The requested algorithm ${code_challenge_method} is not supported by this server!`
       );
     }
   }
@@ -265,6 +260,7 @@ class AuthorizationCodeFlow extends AuthFlow {
       code_verifier,
       code_challenge_method
     );
+
     if (decoded_verifier !== code_challenge) {
       throwError(
         SERVER_ERROR,

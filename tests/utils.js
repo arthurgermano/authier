@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const jwt = require("jsonwebtoken");
+const { createHash, randomBytes } = require("crypto");
 
 const privateKey = fs.readFileSync(
   path.resolve(__dirname, "./keys/jwtRS512.key")
@@ -12,9 +13,9 @@ const publicKey = fs.readFileSync(
 const clientData = {
   client_id: "abcxyz",
   client_secret: "abcxyz2",
-  grant_types:
-    "client_credentials authorization_code refresh_token",
-  redirect_uris: "http://localhost:3000/cb http://localhost:3000/cb2 http://localhost:3000/cb3",
+  grant_types: "client_credentials authorization_code refresh_token",
+  redirect_uris:
+    "http://localhost:3000/cb http://localhost:3000/cb2 http://localhost:3000/cb3",
   scopes: "scopeA scopeB",
   scope_required: true,
   state_required: true,
@@ -69,10 +70,48 @@ function decodeToken(token) {
 
 // ------------------------------------------------------------------------------------
 
+function generateRandomBytes(size = 32) {
+  return randomBytes(size);
+}
+
+// ------------------------------------------------------------------------------------
+
+function base64URLEncode(str) {
+  return str
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
+}
+
+// ------------------------------------------------------------------------------------
+
+function generateVerifier() {
+  return base64URLEncode(generateRandomBytes());
+}
+
+// ------------------------------------------------------------------------------------
+
+function sha(buffer, algorithm = "sha256") {
+  return createHash(algorithm).update(buffer).digest();
+}
+
+// ------------------------------------------------------------------------------------
+
+function generateChallenge(verifier, algorithm) {
+  return base64URLEncode(sha(verifier, algorithm));
+}
+
+// ------------------------------------------------------------------------------------
+
 module.exports = {
   checkToken,
   signToken,
   decodeToken,
   clientData,
-  passwordData,
+  generateChallenge,
+  sha,
+  generateVerifier,
+  base64URLEncode,
+  generateRandomBytes,
 };
