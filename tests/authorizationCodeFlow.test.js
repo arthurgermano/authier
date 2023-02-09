@@ -2323,9 +2323,6 @@ describe("authorizationCodeFlow", () => {
       const verifier = generateVerifier();
       const challege = generateChallenge(verifier, "sha512");
 
-      console.log(verifier);
-      console.log(challege);
-
       const code = await getValidCode(
         {
           mapping_challenge_methods: {
