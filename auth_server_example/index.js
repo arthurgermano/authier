@@ -22,6 +22,7 @@ fastify.listen(3000, async function (err, address) {
   await TestAuthCodePKCE();
   await TestClientCredentials();
   await TestRefreshToken();
+  await TestDeviceCode();
 
   fastify.log.info(`server listened on ${address}`);
   process.exit(0);
@@ -193,3 +194,22 @@ async function TestRefreshToken() {
     console.log("------------------------------\n\n");
   }
 }
+
+async function TestDeviceCode() {
+  try {
+    console.log("------------------------------");
+    console.log("DEVICE CODE START");
+    console.log("------------------------------");
+    const deviceFlow = new OAuth2Lib.DeviceFlow();
+    deviceFlow.generateUserCode({ size: 7});
+    console.log("------------------------------");
+
+  } catch (err) {
+    console.log(err);
+  } finally {
+    console.log("------------------------------");
+    console.log("DEVICE CODE END");
+    console.log("------------------------------\n\n");
+  }
+}
+
