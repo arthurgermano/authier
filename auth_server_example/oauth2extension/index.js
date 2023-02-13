@@ -2,6 +2,7 @@ const OAuth2Lib = require("../../index");
 const AuthFlow = OAuth2Lib.AuthFlow;
 const AuthorizationCodeFlow = OAuth2Lib.AuthorizationCodeFlow;
 const RefreshTokenFlow = OAuth2Lib.RefreshTokenFlow;
+const DeviceCodeFlow = OAuth2Lib.DeviceCodeFlow;
 const { checkToken, signToken } = require("./utils.js");
 
 // --------------------------  PROTOTYPE FUNCTIONS  -----------------------------------------------
@@ -46,10 +47,10 @@ AuthorizationCodeFlow.prototype.generateCode = async function generateToken(
 // ------------------------------------------------------------------------------------------------
 
 AuthorizationCodeFlow.prototype.validateCode = async function validateCode(
-  code
+  args
 ) {
   try {
-    return await checkToken(code);
+    return await checkToken(args.code);
   } catch (error) {
     throw error;
   }
@@ -79,6 +80,30 @@ RefreshTokenFlow.prototype.validateRefreshToken =
       throw error;
     }
   };
+
+// ------------------------------------------------------------------------------------------------
+// --------------------------  DEVICE CODE FUNCTIONS  ---------------------------------------------
+
+DeviceCodeFlow.prototype.generateDeviceCode = async function generateToken(
+  args
+) {
+  return await signToken({
+    exp: Math.floor(Date.now() / 1000) + args.expires_in,
+    scopes: args.scopes_granted || "",
+    verification_uri: args.verification_uri,
+    user_code: args.user_code,
+  });
+};
+
+DeviceCodeFlow.prototype.validateDeviceCode = async function validateDeviceCode(
+  args
+) {
+  try {
+    return await checkToken(args.device_code);
+  } catch (error) {
+    throw error;
+  }
+};
 
 // ------------------------------------------------------------------------------------------------
 

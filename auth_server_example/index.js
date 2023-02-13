@@ -174,7 +174,7 @@ async function TestRefreshToken() {
     console.log("------------------------------");
     console.log("REFRESH TOKEN FLOW START");
     console.log("------------------------------");
-    
+
     const refreshTokenFlow = new OAuth2Lib.RefreshTokenFlow();
     const token = await refreshTokenFlow.getToken({
       client_grant_types: clientData.grant_types.split(" "),
@@ -200,10 +200,36 @@ async function TestDeviceCode() {
     console.log("------------------------------");
     console.log("DEVICE CODE START");
     console.log("------------------------------");
-    const deviceFlow = new OAuth2Lib.DeviceFlow();
-    deviceFlow.generateUserCode({ size: 7});
+    const deviceCodeFlow = new OAuth2Lib.DeviceCodeFlow();
     console.log("------------------------------");
-
+    const { device_code, user_code } = await deviceCodeFlow.requestDeviceCode({
+      interval: 5,
+      expires_in: 1800,
+      add_chars: "-",
+      only_numbers: false,
+      user_code_size: 10,
+      verification_uri: "http://localhost:3000/cb",
+      requested_scopes: ["scopeA"],
+      client_scopes: clientData.scopes.split(" "),
+    });
+    console.log("------------------------------");
+    console.log("DEVICE_CODE");
+    console.log(device_code);
+    console.log("------------------------------");
+    console.log("USER_CODE");
+    console.log(user_code);
+    console.log("------------------------------");
+    const token = await deviceCodeFlow.getToken({
+      client_grant_types: clientData.grant_types.split(" "),
+      client_scopes: clientData.scopes.split(" "),
+      scopes_requested: ["scopeA"],
+      token_info: { sub: "12345" },
+      device_code,
+    });
+    console.log("------------------------------");
+    console.log("TOKEN");
+    console.log(token);
+    console.log("------------------------------");
   } catch (err) {
     console.log(err);
   } finally {
@@ -212,4 +238,3 @@ async function TestDeviceCode() {
     console.log("------------------------------\n\n");
   }
 }
-

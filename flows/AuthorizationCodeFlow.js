@@ -1,6 +1,11 @@
 const { validateGrant } = require("../grant_types/index.js");
 const { validateResponse } = require("../response_types/index.js");
-const { TODO_ERROR, SERVER_ERROR, throwError, INVALID_REQUEST } = require("../errors/index.js");
+const {
+  TODO_ERROR,
+  SERVER_ERROR,
+  throwError,
+  INVALID_REQUEST,
+} = require("../errors/index.js");
 const { returnDefaultValue } = require("../common");
 const { createHash } = require("crypto");
 const AuthFlow = require("./AuthFlow.js");
@@ -76,7 +81,7 @@ class AuthorizationCodeFlow extends AuthFlow {
       false
     );
     if (this.allow_plain_pkce_method) {
-      this.mapping_challenge_methods.plain = "plain"
+      this.mapping_challenge_methods.plain = "plain";
     }
   }
 
@@ -168,7 +173,10 @@ class AuthorizationCodeFlow extends AuthFlow {
   }) {
     try {
       validateGrant("authorization_code", client_grant_types);
-      const code_validation = await this.validateCode(code, scopes_requested);
+      const code_validation = await this.validateCode({
+        code,
+        scopes_requested,
+      });
       const scopes_granted = this.validateScopes(
         scopes_requested,
         client_scopes,
