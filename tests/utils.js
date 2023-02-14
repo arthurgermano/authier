@@ -13,7 +13,7 @@ const publicKey = fs.readFileSync(
 const clientData = {
   client_id: "abcxyz",
   client_secret: "abcxyz2",
-  grant_types: "client_credentials authorization_code refresh_token",
+  grant_types: "client_credentials authorization_code refresh_token device_code",
   redirect_uris:
     "http://localhost:3000/cb http://localhost:3000/cb2 http://localhost:3000/cb3",
   scopes: "scopeA scopeB",

@@ -32,7 +32,7 @@ AuthFlow.prototype.validateToken = async function validateToken(token) {
 
 // --------------------------  AUTHORIZATION CODE FUNCTIONS  --------------------------------------
 
-AuthorizationCodeFlow.prototype.generateCode = async function generateToken(
+AuthorizationCodeFlow.prototype.generateCode = async function generateCode(
   args
 ) {
   return await signToken({
@@ -84,7 +84,7 @@ RefreshTokenFlow.prototype.validateRefreshToken =
 // ------------------------------------------------------------------------------------------------
 // --------------------------  DEVICE CODE FUNCTIONS  ---------------------------------------------
 
-DeviceCodeFlow.prototype.generateDeviceCode = async function generateToken(
+DeviceCodeFlow.prototype.generateDeviceCode = async function generateDeviceCode(
   args
 ) {
   return await signToken({

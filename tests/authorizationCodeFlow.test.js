@@ -56,10 +56,14 @@ function setGenerateTokenFunc() {
 }
 
 function setValidateCodeFunc() {
-  CopyAuthorizationCodeFlow.prototype.validateCode = async function (code) {
-    const codeToken = await checkToken(code);
-    return codeToken;
-  };
+  CopyAuthorizationCodeFlow.prototype.validateCode =
+    async function validateCode(args) {
+      try {
+        return await checkToken(args.code);
+      } catch (error) {
+        throw error;
+      }
+    };
 }
 
 async function getValidCode(options, params = {}) {
@@ -152,14 +156,11 @@ describe("authorizationCodeFlow", () => {
 
   describe("validateCode()", () => {
     it("validateCode() - setting a valid validateCode function with params", async () => {
-      CopyAuthorizationCodeFlow.prototype.validateCode = async function (
-        code,
-        scopes_requested
-      ) {
-        if (code != "qwerasdfzxc") {
+      CopyAuthorizationCodeFlow.prototype.validateCode = async function (args) {
+        if (args.code != "qwerasdfzxc") {
           return false;
         }
-        if (scopes_requested != "qwerasdfzxc") {
+        if (args.scopes_requested != "qwerasdfzxc") {
           return false;
         }
         return true;
@@ -167,7 +168,10 @@ describe("authorizationCodeFlow", () => {
 
       acFlow = new CopyAuthorizationCodeFlow();
 
-      const codeToken = await acFlow.validateCode("qwerasdfzxc", "qwerasdfzxc");
+      const codeToken = await acFlow.validateCode({
+        code: "qwerasdfzxc",
+        scopes_requested: "qwerasdfzxc",
+      });
       expect(codeToken).toBe(true);
     });
 
@@ -176,7 +180,10 @@ describe("authorizationCodeFlow", () => {
     it("validateCode() - NOT setting a valid validateCode function with params", async () => {
       let errorExpected;
       try {
-        await acFlow.validateCode("qwerasdfzxc", "qwerasdfzxc");
+        await acFlow.validateCode({
+          code: "qwerasdfzxc",
+          scopes_requested: "qwerasdfzxc",
+        });
       } catch (error) {
         errorExpected = error;
       }

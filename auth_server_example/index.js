@@ -57,7 +57,7 @@ async function TestAuthCode() {
     console.log(code);
     console.log("------------------------------");
 
-    const codeValidated = await authCode.validateCode(code);
+    const codeValidated = await authCode.validateCode({ code });
     console.log("------------------------------");
     console.log("VALIDATING CODE");
     console.log(codeValidated);
@@ -110,7 +110,7 @@ async function TestAuthCodePKCE() {
     console.log(code);
     console.log("------------------------------");
 
-    const codeValidated = await authCode.validateCode(code);
+    const codeValidated = await authCode.validateCode({ code });
     console.log("------------------------------");
     console.log("VALIDATING CODE");
     console.log(codeValidated);
