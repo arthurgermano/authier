@@ -19,6 +19,7 @@ const clientData = {
   scope_required: true,
   state_required: true,
   redirect_uri_required: true,
+  verification_uris: "http://localhost:3000/cb http://localhost:3000/cb2 http://localhost:3000/cb3",
   issuer: "my company issuer1",
 };
 

@@ -88,10 +88,12 @@ DeviceCodeFlow.prototype.generateDeviceCode = async function generateDeviceCode(
   args
 ) {
   return await signToken({
+    ...device_code_info,
     exp: Math.floor(Date.now() / 1000) + args.expires_in,
     scopes: args.scopes_granted || "",
     verification_uri: args.verification_uri,
     user_code: args.user_code,
+    interval: args.interval,
   });
 };
 
