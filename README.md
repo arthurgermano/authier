@@ -22,6 +22,9 @@ Authier is a simple library helper to make it easier to implement and serve auth
   - [Code Flow](#code-flow)
     - [Fields](#fields-2)
     - [Example of Functions of Code Flow Implemented](#example-of-functions-of-code-flow-implemented-1)
+  - [Device Code Flow](#device-code-flow)
+    - [Fields](#fields-3)
+    - [Example of Functions of Code Flow Implemented](#example-of-functions-of-code-flow-implemented-2)
   - [Refresh Token Flow](#refresh-token-flow)
     - [Example of Functions of Refresh Token Flow Implemented](#example-of-functions-of-refresh-token-flow-implemented)
   - [Example of All Methods to be Implemented](#example-of-all-methods-to-be-implemented)
@@ -180,13 +183,6 @@ It inherits from Auth Flow fields and adds the following:
   pkce_required;
 
   /**
-   * code_challenge_method - The code challenge method
-   * @param {String}
-   * @default S256
-   */
-  code_challenge_method;
-
-  /**
    * mapping_challenge_methods - The mapper for code challenge methods
    * @param {Object}
    * @default { plain: "plain", "S256": "sha256" }
@@ -233,6 +229,52 @@ AuthorizationCodeFlow.prototype.validateCode = async function validateCode(
 };
 
 // ------------------------------------------------------------------------------------
+```
+
+<hr />
+
+## Device Code Flow
+### Fields
+It inherits from Auth Flow fields and adds the following:
+
+```js
+  static slow_down = { error: "slow_down" };
+  static authorization_pending = { error: "authorization_pending" };
+  static access_denied = { error: "access_denied" };
+  static expired_token = { error: "expired_token" };
+```
+
+### Example of Functions of Code Flow Implemented
+
+It inherits from Auth Flow functions and adds the following:
+
+```js
+// --------------------------  DEVICE CODE FUNCTIONS  ---------------------------------------------
+
+DeviceCodeFlow.prototype.generateDeviceCode = async function generateDeviceCode(
+  args
+) {
+  return await signToken({
+    ...device_code_info,
+    exp: Math.floor(Date.now() / 1000) + args.expires_in,
+    scopes: args.scopes_granted || "",
+    verification_uri: args.verification_uri,
+    user_code: args.user_code,
+    interval: args.interval,
+  });
+};
+
+DeviceCodeFlow.prototype.validateDeviceCode = async function validateDeviceCode(
+  args
+) {
+  try {
+    return await checkToken(args.device_code);
+  } catch (error) {
+    throw error;
+  }
+};
+
+// ------------------------------------------------------------------------------------------------
 ```
 
 <hr />
