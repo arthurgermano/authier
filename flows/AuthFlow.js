@@ -6,7 +6,7 @@ const {
   throwError,
 } = require("../errors/index.js");
 
-const { returnDefaultValue } = require('../common');
+const { returnDefaultValue } = require("../common");
 
 // ------------------------------------------------------------------------------------------------
 
@@ -160,28 +160,25 @@ class AuthFlow {
    * @returns {Boolean} - True if the scopes are valid
    */
   validateScopes(scopes, expected_scopes, match_all = true, required = false) {
-    let valid_scopes = [];
+    if (!Array.isArray(expected_scopes) || expected_scopes.length == 0) {
+      return "";
+    }
     if (!Array.isArray(scopes) || scopes.length == 0) {
       if (required) {
         throwError(
-          SERVER_ERROR,
-          "validateScopes(): scopes must be an array of strings"
+          INVALID_SCOPE,
+          "validateScopes(): The scopes requested are not valid for this client"
         );
       }
-      return expected_scopes;
     }
-    if (!Array.isArray(expected_scopes) || expected_scopes.length == 0) {
-      throwError(
-        SERVER_ERROR,
-        "validateScopes(): expected_scopes must be an array of strings"
-      );
-    }
+
+    let valid_scopes = [];
     if (match_all) {
       // must match all scopes listed
       // if any scope is not granted, throw error
       // otherwise return true
-      for (let scope of scopes) {
-        const hasScope = expected_scopes.find((s) => s === scope);
+      for (let expected_scope of expected_scopes) {
+        const hasScope = scopes.find((s) => s === expected_scope);
         if (!hasScope) {
           throwError(
             INVALID_SCOPE,
@@ -194,16 +191,19 @@ class AuthFlow {
 
     // if any scope is valid and is listed then return true
     // otherwise throw an error
-    for (let scope of scopes) {
-      const hasScope = expected_scopes.find((s) => s === scope);
+    for (let expected_scope of expected_scopes) {
+      const hasScope = scopes.find((s) => s === scope);
       if (hasScope) {
-        valid_scopes.push(scope);
+        valid_scopes.push(expected_scope);
       }
     }
     if (valid_scopes.length > 0) {
       return valid_scopes;
     }
-    throwError(INVALID_SCOPE, `validateScopes(): No scope listed is granted`);
+    throwError(
+      INVALID_SCOPE,
+      `validateScopes(): No scope requested are able to be granted by this client`
+    );
   }
 
   // ----------------------------------------------------------------------------------------------
