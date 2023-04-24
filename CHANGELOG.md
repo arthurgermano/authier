@@ -1,5 +1,10 @@
 # Authier Changelog
 
+## 4.0.0
+
+  - Fixing errors
+  - Code improvements related to scope checking
+
 ## 3.0.0
 
   - dropped support for old versions of Authier

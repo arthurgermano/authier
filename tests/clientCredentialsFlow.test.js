@@ -295,9 +295,9 @@ describe("clientCredentialsFlow", () => {
     } catch (error) {
       errorExpected = error;
     }
-    expect(errorExpected.error).toBe("server_error");
+    expect(errorExpected.error).toBe("invalid_scope");
     expect(errorExpected.more_info).toBe(
-      "validateScopes(): scopes must be an array of strings"
+      "validateScopes(): No scopes informed but this client requires scopes to be informed"
     );
   });
 
@@ -329,9 +329,9 @@ describe("clientCredentialsFlow", () => {
     } catch (error) {
       errorExpected = error;
     }
-    expect(errorExpected.error).toBe("server_error");
+    expect(errorExpected.error).toBe("invalid_scope");
     expect(errorExpected.more_info).toBe(
-      "validateScopes(): scopes must be an array of strings"
+      "validateScopes(): No scopes informed but this client requires scopes to be informed"
     );
   });
 
@@ -361,7 +361,7 @@ describe("clientCredentialsFlow", () => {
     const decoded = await decodeToken(token);
     expect(token).toBeTypeOf("string");
     expect(decoded.sub).toBe("12345");
-    expect(decoded.scopes).toBe("scopeA scopeB");
+    expect(decoded.scopes).toBe("");
     expect(decoded.exp).toBeDefined();
   });
 
@@ -391,7 +391,7 @@ describe("clientCredentialsFlow", () => {
     const decoded = await decodeToken(token);
     expect(token).toBeTypeOf("string");
     expect(decoded.sub).toBe("12345");
-    expect(decoded.scopes).toBe("scopeA scopeB");
+    expect(decoded.scopes).toBe("");
     expect(decoded.exp).toBeDefined();
   });
 });

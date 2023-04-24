@@ -161,18 +161,20 @@ class AuthFlow {
    */
   validateScopes(scopes, expected_scopes, match_all = true, required = false) {
     if (!Array.isArray(expected_scopes) || expected_scopes.length == 0) {
-      return "";
-    }
-    if (!Array.isArray(scopes) || scopes.length == 0) {
       if (required) {
         throwError(
           INVALID_SCOPE,
-          "validateScopes(): The scopes requested are not valid for this client"
+          "validateScopes(): No scopes informed but this client requires scopes to be informed"
         );
       }
+      return [];
     }
-
-    let valid_scopes = [];
+    if (!Array.isArray(scopes) || scopes.length == 0) {
+      throwError(
+        INVALID_SCOPE,
+        "validateScopes(): The scopes requested are not valid for this client"
+      );
+    }
     if (match_all) {
       // must match all scopes listed
       // if any scope is not granted, throw error
@@ -182,17 +184,18 @@ class AuthFlow {
         if (!hasScope) {
           throwError(
             INVALID_SCOPE,
-            "validateScopes(): The scope " + scope + " is not valid"
+            "validateScopes(): The scope " + expected_scope + " is not valid"
           );
         }
       }
-      return scopes;
+      return expected_scopes;
     }
-
+    
     // if any scope is valid and is listed then return true
     // otherwise throw an error
+    let valid_scopes = [];
     for (let expected_scope of expected_scopes) {
-      const hasScope = scopes.find((s) => s === scope);
+      const hasScope = scopes.find((s) => s === expected_scope);
       if (hasScope) {
         valid_scopes.push(expected_scope);
       }

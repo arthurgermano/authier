@@ -24,8 +24,6 @@ beforeEach(async () => {
 });
 
 function setGenerateDeviceCodeFunc() {
-  console.log(CopyDeviceCodeFlow);
-
   CopyDeviceCodeFlow.prototype.generateDeviceCode =
     async function generateDeviceCode(args) {
       return await signToken({

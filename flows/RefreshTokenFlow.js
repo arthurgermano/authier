@@ -35,8 +35,8 @@ class RefreshTokenFlow extends AuthFlow {
     try {
       validateGrant("refresh_token", client_grant_types);
       const scopes_granted = this.validateScopes(
-        scopes_requested,
         client_scopes,
+        scopes_requested,
         this.match_all_scopes,
         this.scope_required
       );

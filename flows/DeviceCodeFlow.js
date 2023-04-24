@@ -46,8 +46,8 @@ class DeviceCodeFlow extends AuthFlow {
   }) {
     try {
       const scopes_granted = this.validateScopes(
-        requested_scopes,
         client_scopes,
+        requested_scopes,
         this.match_all_scopes,
         this.scope_required
       );
@@ -138,8 +138,8 @@ class DeviceCodeFlow extends AuthFlow {
         scopes_requested,
       });
       const scopes_granted = this.validateScopes(
-        scopes_requested,
         client_scopes,
+        scopes_requested,
         this.match_all_scopes,
         this.scope_required
       );

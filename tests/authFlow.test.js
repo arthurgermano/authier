@@ -167,7 +167,7 @@ describe("authFlow", () => {
       } catch (error) {
         errorExpected = error;
       }
-      
+
       expect(errorExpected).toHaveProperty("error", "server_error");
       expect(errorExpected).toHaveProperty(
         "more_info",
@@ -180,9 +180,9 @@ describe("authFlow", () => {
 
   describe("validateScopes()", () => {
     it("validateScopes() - validating a valid scope", () => {
-      expect(authFlow.validateScopes(["scopeA"], ["scopeA", "scopeB"])).toEqual(
-        ["scopeA"]
-      );
+      expect(
+        authFlow.validateScopes(["scopeA"], ["scopeA", "scopeB"], false)
+      ).toEqual(["scopeA"]);
     });
 
     // --------------------------------------------------------------------------------------------
@@ -198,7 +198,7 @@ describe("authFlow", () => {
       expect(errorExpected).toHaveProperty("error", "invalid_scope");
       expect(errorExpected).toHaveProperty(
         "more_info",
-        "validateScopes(): The scope scopeA is not valid"
+        "validateScopes(): The scope scopeB is not valid"
       );
     });
 
@@ -212,10 +212,10 @@ describe("authFlow", () => {
         errorExpected = error;
       }
 
-      expect(errorExpected).toHaveProperty("error", "server_error");
+      expect(errorExpected).toHaveProperty("error", "invalid_scope");
       expect(errorExpected).toHaveProperty(
         "more_info",
-        "validateScopes(): scopes must be an array of strings"
+        "validateScopes(): The scopes requested are not valid for this client"
       );
     });
 
@@ -224,15 +224,15 @@ describe("authFlow", () => {
     it("validateScopes() - validating a invalid param expected scope", () => {
       let errorExpected;
       try {
-        authFlow.validateScopes(["scopeA"], undefined);
+        authFlow.validateScopes(["scopeA"], undefined, true, true);
       } catch (error) {
         errorExpected = error;
       }
 
-      expect(errorExpected).toHaveProperty("error", "server_error");
+      expect(errorExpected).toHaveProperty("error", "invalid_scope");
       expect(errorExpected).toHaveProperty(
         "more_info",
-        "validateScopes(): expected_scopes must be an array of strings"
+        "validateScopes(): No scopes informed but this client requires scopes to be informed"
       );
     });
 
@@ -262,7 +262,7 @@ describe("authFlow", () => {
       expect(errorExpected).toHaveProperty("error", "invalid_scope");
       expect(errorExpected).toHaveProperty(
         "more_info",
-        "validateScopes(): The scope scopeC is not valid"
+        "validateScopes(): The scope scopeD is not valid"
       );
     });
 
@@ -272,10 +272,10 @@ describe("authFlow", () => {
       expect(
         authFlow.validateScopes(
           ["scopeC", "scopeB"],
-          ["scopeC", "scopeB", "scopeA", "scopeD"],
+          ["scopeB", "scopeC"],
           true
         )
-      ).toEqual(["scopeC", "scopeB"]);
+      ).toEqual(["scopeB", "scopeC"]);
     });
 
     // --------------------------------------------------------------------------------------------
@@ -295,7 +295,7 @@ describe("authFlow", () => {
       expect(errorExpected).toHaveProperty("error", "invalid_scope");
       expect(errorExpected).toHaveProperty(
         "more_info",
-        "validateScopes(): The scope scopeB is not valid"
+        "validateScopes(): The scope scopeE is not valid"
       );
     });
   });
@@ -331,7 +331,7 @@ describe("authFlow", () => {
       } catch (error) {
         errorExpected = error;
       }
-      
+
       expect(errorExpected).toHaveProperty("error", "todo_error");
       expect(errorExpected).toHaveProperty(
         "more_info",

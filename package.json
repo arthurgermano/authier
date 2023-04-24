@@ -1,11 +1,12 @@
 {
   "name": "authier",
-  "version": "3.0.2",
+  "version": "4.0.0",
   "author": "Arthur José Germano",
   "license": "MIT",
   "main": "src/index.js",
   "scripts": {
-    "test": "vitest --run --reporter verbose --globals"
+    "test": "vitest --run --reporter verbose --globals",
+    "testfile": "vitest --run --reporter verbose --globals ./tests/deviceCodeFlow.test.js"
   },
   "keywords": [
     "oauth2",
@@ -24,7 +25,9 @@
     "url": "https://github.com/arthurgermano/authier/issues"
   },
   "dependencies": {
-    "jsonwebtoken": "^9.0.0",
+    "jsonwebtoken": "^9.0.0"
+  },
+  "devDependencies": {
     "vitest": "^0.28.4"
   }
 }
