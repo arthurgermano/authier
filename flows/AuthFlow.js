@@ -167,12 +167,12 @@ class AuthFlow {
           "validateScopes(): No scopes informed but this client requires scopes to be informed"
         );
       }
-      return [];
+      return scopes;
     }
     if (!Array.isArray(scopes) || scopes.length == 0) {
       throwError(
         INVALID_SCOPE,
-        "validateScopes(): The scopes requested are not valid for this client"
+        "validateScopes(): The scopes requested are not valid for this client - this client has no scopes"
       );
     }
     if (match_all) {

@@ -361,7 +361,7 @@ describe("clientCredentialsFlow", () => {
     const decoded = await decodeToken(token);
     expect(token).toBeTypeOf("string");
     expect(decoded.sub).toBe("12345");
-    expect(decoded.scopes).toBe("");
+    expect(decoded.scopes).toBe("scopeA scopeB");
     expect(decoded.exp).toBeDefined();
   });
 
@@ -391,7 +391,7 @@ describe("clientCredentialsFlow", () => {
     const decoded = await decodeToken(token);
     expect(token).toBeTypeOf("string");
     expect(decoded.sub).toBe("12345");
-    expect(decoded.scopes).toBe("");
+    expect(decoded.scopes).toBe("scopeA scopeB");
     expect(decoded.exp).toBeDefined();
   });
 });

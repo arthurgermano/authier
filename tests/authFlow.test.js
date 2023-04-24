@@ -215,7 +215,7 @@ describe("authFlow", () => {
       expect(errorExpected).toHaveProperty("error", "invalid_scope");
       expect(errorExpected).toHaveProperty(
         "more_info",
-        "validateScopes(): The scopes requested are not valid for this client"
+        "validateScopes(): The scopes requested are not valid for this client - this client has no scopes"
       );
     });
 

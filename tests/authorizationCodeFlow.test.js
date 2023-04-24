@@ -387,7 +387,7 @@ describe("authorizationCodeFlow", () => {
       const decoded = await decodeToken(codeToken);
       expect(codeToken).toBeTypeOf("string");
       expect(decoded.sub).toBe("12345");
-      expect(decoded.scopes).toBe("");
+      expect(decoded.scopes).toBe("scopeA scopeB");
       expect(decoded.exp).toBeDefined();
       expect(decoded.state).toBe("stateABCZYX");
       expect(decoded.redirect_uri).toBe("http://localhost:3000/cb");
@@ -416,7 +416,7 @@ describe("authorizationCodeFlow", () => {
       }
       expect(errorExpected.error).toBe("invalid_scope");
       expect(errorExpected.more_info).toBe(
-        "validateScopes(): The scopes requested are not valid for this client"
+        "validateScopes(): The scopes requested are not valid for this client - this client has no scopes"
       );
     });
 
@@ -824,7 +824,7 @@ describe("authorizationCodeFlow", () => {
       const decoded = await decodeToken(token);
       expect(token).toBeTypeOf("string");
       expect(decoded.sub).toBe("12345");
-      expect(decoded.scopes).toBe("");
+      expect(decoded.scopes).toBe("scopeA scopeB");
       expect(decoded.exp).toBeDefined();
       expect(decoded.redirect_uri).toBe("http://localhost:3000/cb");
     });
@@ -854,7 +854,7 @@ describe("authorizationCodeFlow", () => {
       const decoded = await decodeToken(token);
       expect(token).toBeTypeOf("string");
       expect(decoded.sub).toBe("12345");
-      expect(decoded.scopes).toBe("");
+      expect(decoded.scopes).toBe("scopeA scopeB");
       expect(decoded.exp).toBeDefined();
       expect(decoded.redirect_uri).toBe("http://localhost:3000/cb");
     });
@@ -1176,7 +1176,7 @@ describe("authorizationCodeFlow", () => {
       const decoded = await decodeToken(codeToken);
       expect(codeToken).toBeTypeOf("string");
       expect(decoded.sub).toBe("12345");
-      expect(decoded.scopes).toBe("");
+      expect(decoded.scopes).toBe("scopeA scopeB");
       expect(decoded.exp).toBeDefined();
       expect(decoded.state).toBe("stateABCZYX");
       expect(decoded.redirect_uri).toBe("http://localhost:3000/cb");
@@ -1207,7 +1207,7 @@ describe("authorizationCodeFlow", () => {
       }
       expect(errorExpected.error).toBe("invalid_scope");
       expect(errorExpected.more_info).toBe(
-        "validateScopes(): The scopes requested are not valid for this client"
+        "validateScopes(): The scopes requested are not valid for this client - this client has no scopes"
       );
     });
 
@@ -1869,7 +1869,7 @@ describe("authorizationCodeFlow", () => {
       const decoded = await decodeToken(token);
       expect(token).toBeTypeOf("string");
       expect(decoded.sub).toBe("12345");
-      expect(decoded.scopes).toBe("");
+      expect(decoded.scopes).toBe("scopeA scopeB");
       expect(decoded.exp).toBeDefined();
       expect(decoded.redirect_uri).toBe("http://localhost:3000/cb");
     });
@@ -1905,7 +1905,7 @@ describe("authorizationCodeFlow", () => {
       const decoded = await decodeToken(token);
       expect(token).toBeTypeOf("string");
       expect(decoded.sub).toBe("12345");
-      expect(decoded.scopes).toBe("");
+      expect(decoded.scopes).toBe("scopeA scopeB");
       expect(decoded.exp).toBeDefined();
       expect(decoded.redirect_uri).toBe("http://localhost:3000/cb");
     });
@@ -2085,7 +2085,7 @@ describe("authorizationCodeFlow", () => {
       const decoded = await decodeToken(token);
       expect(token).toBeTypeOf("string");
       expect(decoded.sub).toBe("12345");
-      expect(decoded.scopes).toBe("");
+      expect(decoded.scopes).toBe("scopeA scopeB");
       expect(decoded.exp).toBeDefined();
       expect(decoded.redirect_uri).toBe("http://localhost:3000/cb");
     });
@@ -2165,7 +2165,7 @@ describe("authorizationCodeFlow", () => {
       const decoded = await decodeToken(token);
       expect(token).toBeTypeOf("string");
       expect(decoded.sub).toBe("12345");
-      expect(decoded.scopes).toBe("");
+      expect(decoded.scopes).toBe("scopeA scopeB");
       expect(decoded.exp).toBeDefined();
       expect(decoded.redirect_uri).toBe("http://localhost:3000/cb");
     });
@@ -2204,7 +2204,7 @@ describe("authorizationCodeFlow", () => {
       const decoded = await decodeToken(token);
       expect(token).toBeTypeOf("string");
       expect(decoded.sub).toBe("12345");
-      expect(decoded.scopes).toBe("");
+      expect(decoded.scopes).toBe("scopeA scopeB");
       expect(decoded.exp).toBeDefined();
       expect(decoded.redirect_uri).toBe("http://localhost:3000/cb");
     });
@@ -2281,7 +2281,7 @@ describe("authorizationCodeFlow", () => {
       const decoded = await decodeToken(token);
       expect(token).toBeTypeOf("string");
       expect(decoded.sub).toBe("12345");
-      expect(decoded.scopes).toBe("");
+      expect(decoded.scopes).toBe("scopeA scopeB");
       expect(decoded.exp).toBeDefined();
       expect(decoded.redirect_uri).toBe("http://localhost:3000/cb");
     });
@@ -2367,7 +2367,7 @@ describe("authorizationCodeFlow", () => {
       const decoded = await decodeToken(token);
       expect(token).toBeTypeOf("string");
       expect(decoded.sub).toBe("12345");
-      expect(decoded.scopes).toBe("");
+      expect(decoded.scopes).toBe("scopeA scopeB");
       expect(decoded.exp).toBeDefined();
       expect(decoded.redirect_uri).toBe("http://localhost:3000/cb");
     });
