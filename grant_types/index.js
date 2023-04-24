@@ -27,8 +27,8 @@ function validateGrant(requested_grant_type, expected_grant_types = []) {
   }
   if (expected_grant_types.length === 0) {
     throwError(
-      SERVER_ERROR,
-      "validateGrant(): expected_grant_types must be a valid array"
+      UNSUPPORTED_GRANT_TYPE,
+      "validateGrant(): The client supports no grant types"
     );
   }
   if (!expected_grant_types.includes(requested_grant_type)) {

@@ -555,9 +555,9 @@ describe("authorizationCodeFlow", () => {
       } catch (error) {
         errorExpected = error;
       }
-      expect(errorExpected.error).toBe("server_error");
+      expect(errorExpected.error).toBe("unsupported_grant_type");
       expect(errorExpected.more_info).toBe(
-        "validateGrant(): expected_grant_types must be a valid array"
+        "validateGrant(): The client supports no grant types"
       );
     });
 
@@ -1542,9 +1542,9 @@ describe("authorizationCodeFlow", () => {
       } catch (error) {
         errorExpected = error;
       }
-      expect(errorExpected.error).toBe("server_error");
+      expect(errorExpected.error).toBe("unsupported_grant_type");
       expect(errorExpected.more_info).toBe(
-        "validateGrant(): expected_grant_types must be a valid array"
+        "validateGrant(): The client supports no grant types"
       );
     });
 
