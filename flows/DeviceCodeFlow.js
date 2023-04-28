@@ -36,6 +36,7 @@ class DeviceCodeFlow extends AuthFlow {
   async requestDeviceCode({
     requested_scopes = [],
     client_scopes = [],
+    client_grant_types = [],
     verification_uri = "",
     interval = 5,
     expires_in = 1800,
