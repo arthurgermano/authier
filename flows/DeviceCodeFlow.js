@@ -45,6 +45,7 @@ class DeviceCodeFlow extends AuthFlow {
     device_code_info = {},
   }) {
     try {
+      validateGrant("device_code", client_grant_types);
       const scopes_granted = this.validateScopes(
         client_scopes,
         requested_scopes,
