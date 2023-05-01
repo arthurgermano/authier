@@ -189,6 +189,9 @@ class AuthorizationCodeFlow extends AuthFlow {
         this.is_uri_encoded
       );
       if (this.pkce_required) {
+        if (code_validation.code_challenge_method) {
+          code_challenge_method = code_validation.code_challenge_method;
+        }
         this.validateCodeVerifier(
           code_verifier,
           code_challenge,
