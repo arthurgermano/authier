@@ -120,7 +120,6 @@ class DeviceCodeFlow extends AuthFlow {
         device_code,
       });
       return await this.generateToken({
-        scopes_granted,
         token_info,
         device_code_validation,
       });
