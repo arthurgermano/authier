@@ -118,7 +118,6 @@ class DeviceCodeFlow extends AuthFlow {
       validateGrant("device_code", this.grant_types);
       const device_code_validation = await this.validateDeviceCode({
         device_code,
-        scopes_requested,
       });
       return await this.generateToken({
         scopes_granted,
@@ -136,11 +135,10 @@ class DeviceCodeFlow extends AuthFlow {
    * @summary. Validates a provided device code
    * - Can be implemented to do more things as save codes in the database etc...
    * @param {String} device_code - The code string to be validated.
-   * @param {Object} scopes_requested - The scopes requested.
    * @throws Errors - Depending of the flow
    * @return {Object} validation of the code information - the code giving access to request a token
    */
-  async validateDeviceCode({ device_code, scopes_requested }) {
+  async validateDeviceCode({ device_code }) {
     // Must validate the code
     // check its scopes, signature, etc
     // Must return the validation info or throw an exception
