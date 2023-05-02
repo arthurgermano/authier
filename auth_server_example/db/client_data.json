@@ -5,7 +5,7 @@
     "grant_types": "client_credentials authorization_code implicit password refresh_token",
     "redirect_uris": "http://localhost:3000/cb",
     "scopes": "scopeA scopeB",
-    "scope_required": true,    
+    "scopes_required": true,    
     "state_required": true,
     "redirect_uri_required": true,
     "issuer": "my company issuer1"

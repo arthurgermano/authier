@@ -14,6 +14,12 @@ import {
 let acFlow;
 let CopyAuthorizationCodeFlow;
 let clientTestData;
+const copyClientData = {
+  ...clientData,
+  grant_types: clientData.grant_types.split(" "),
+  redirect_uris: clientData.redirect_uris.split(" "),
+  scopes: clientData.scopes.split(" "),
+};
 
 // ------------------------------------------------------------------------------------------------
 
@@ -23,11 +29,7 @@ beforeEach(() => {
       super(options);
     }
   };
-  acFlow = new AuthorizationCodeFlow();
-  clientTestData = Object.assign({}, clientData);
-  clientTestData.grant_types = clientTestData.grant_types.split(" ");
-  clientTestData.scopes = clientTestData.scopes.split(" ");
-  clientTestData.redirect_uris = clientTestData.redirect_uris.split(" ");
+  acFlow = new AuthorizationCodeFlow(copyClientData);
 });
 
 function setGenerateCodeFunc() {
@@ -71,11 +73,9 @@ async function getValidCode(options, params = {}) {
   const acFlow = new CopyAuthorizationCodeFlow(options);
   return await acFlow.getCode({
     response_type: "code",
-    client_redirect_uris: clientTestData.redirect_uris,
     redirect_uri: "http://localhost:3000/cb",
     requested_scopes: ["scopeA"],
-    client_scopes: clientTestData.scopes,
-    state: "stateABCZYX",
+
     code_info: { sub: "12345" },
     ...params,
   });
@@ -86,7 +86,8 @@ async function getValidCode(options, params = {}) {
 describe("authorizationCodeFlow", () => {
   it("constructor() - generating a new AuthorizationCodeFlow with options", () => {
     acFlow = new AuthorizationCodeFlow({
-      scope_required: true,
+      ...copyClientData,
+      scopes_required: true,
     });
     expect(acFlow).toBeInstanceOf(AuthorizationCodeFlow);
   });
@@ -108,15 +109,16 @@ describe("authorizationCodeFlow", () => {
         });
       };
 
-      acFlow = new CopyAuthorizationCodeFlow({ pkce_required: false });
+      acFlow = new CopyAuthorizationCodeFlow({
+        ...copyClientData,
+        pkce_required: false,
+      });
 
       const codeToken = await acFlow.getCode({
         response_type: "code",
-        client_redirect_uris: clientTestData.redirect_uris,
         redirect_uri: "http://localhost:3000/cb",
         requested_scopes: ["scopeA"],
-        client_scopes: clientTestData.scopes,
-        state: "stateABCZYX",
+
         code_info: { sub: "12345" },
       });
 
@@ -126,7 +128,6 @@ describe("authorizationCodeFlow", () => {
       expect(decoded.sub).toBe("12345");
       expect(decoded.scopes).toBe("scopeA");
       expect(decoded.exp).toBe(expires);
-      expect(decoded.state).toBe("stateABCZYX");
       expect(decoded.redirect_uri).toBe("http://localhost:3000/cb");
     });
 
@@ -167,7 +168,7 @@ describe("authorizationCodeFlow", () => {
         return true;
       };
 
-      acFlow = new CopyAuthorizationCodeFlow();
+      acFlow = new CopyAuthorizationCodeFlow(copyClientData);
 
       const codeToken = await acFlow.validateCode({
         code: "qwerasdfzxc",
@@ -203,17 +204,18 @@ describe("authorizationCodeFlow", () => {
     it("getCode() - passing a wrong type of response code", async () => {
       setGenerateCodeFunc();
 
-      acFlow = new CopyAuthorizationCodeFlow({ pkce_required: false });
+      acFlow = new CopyAuthorizationCodeFlow({
+        ...copyClientData,
+        pkce_required: false,
+      });
 
       let errorExpected;
       try {
         await acFlow.getCode({
           response_type: "notacode",
-          client_redirect_uris: clientTestData.redirect_uris,
           redirect_uri: "http://localhost:3000/cb",
           requested_scopes: ["scopeA"],
-          client_scopes: clientTestData.scopes,
-          state: "stateABCZYX",
+
           code_info: { sub: "12345" },
         });
       } catch (error) {
@@ -230,17 +232,18 @@ describe("authorizationCodeFlow", () => {
     it("getCode() - passing a callback not valid for the client", async () => {
       setGenerateCodeFunc();
 
-      acFlow = new CopyAuthorizationCodeFlow({ pkce_required: false });
+      acFlow = new CopyAuthorizationCodeFlow({
+        ...copyClientData,
+        pkce_required: false,
+      });
 
       let errorExpected;
       try {
         await acFlow.getCode({
           response_type: "code",
-          client_redirect_uris: clientTestData.redirect_uris,
           redirect_uri: "http://localhost:3000/notvalid",
           requested_scopes: ["scopeA"],
-          client_scopes: clientTestData.scopes,
-          state: "stateABCZYX",
+
           code_info: { sub: "12345" },
         });
       } catch (error) {
@@ -254,53 +257,27 @@ describe("authorizationCodeFlow", () => {
 
     // --------------------------------------------------------------------------------------------
 
-    it("getCode() - passing an undefined client redirect_uris", async () => {
-      setGenerateCodeFunc();
-
-      acFlow = new CopyAuthorizationCodeFlow({ pkce_required: false });
-
-      let errorExpected;
-      try {
-        await acFlow.getCode({
-          response_type: "code",
-          client_redirect_uris: undefined,
-          redirect_uri: "http://localhost:3000/cb",
-          requested_scopes: ["scopeA"],
-          client_scopes: clientTestData.scopes,
-          state: "stateABCZYX",
-          code_info: { sub: "12345" },
-        });
-      } catch (error) {
-        errorExpected = error;
-      }
-      expect(errorExpected.error).toBe("server_error");
-      expect(errorExpected.more_info).toBe(
-        "validateRedirectUri(): redirect_uris must be an array of strings containing valid URIs"
-      );
-    });
-
-    // --------------------------------------------------------------------------------------------
-
     it("getCode() - passing an undefined callback", async () => {
       setGenerateCodeFunc();
 
-      acFlow = new CopyAuthorizationCodeFlow({ pkce_required: false });
+      acFlow = new CopyAuthorizationCodeFlow({
+        ...copyClientData,
+        pkce_required: false,
+      });
 
       let errorExpected;
       try {
         await acFlow.getCode({
           response_type: "code",
-          client_redirect_uris: clientTestData.redirect_uris,
           redirect_uri: undefined,
           requested_scopes: ["scopeA"],
-          client_scopes: clientTestData.scopes,
-          state: "stateABCZYX",
+
           code_info: { sub: "12345" },
         });
       } catch (error) {
         errorExpected = error;
       }
-      expect(errorExpected.error).toBe("server_error");
+      expect(errorExpected.error).toBe("invalid_request");
       expect(errorExpected.more_info).toBe(
         "validateRedirectUri(): redirect_uri must be a valid string containing a valid URI"
       );
@@ -312,17 +289,16 @@ describe("authorizationCodeFlow", () => {
       setGenerateCodeFunc();
 
       acFlow = new CopyAuthorizationCodeFlow({
+        ...copyClientData,
         redirect_uri_required: false,
         pkce_required: false,
       });
 
       const codeToken = await acFlow.getCode({
         response_type: "code",
-        client_redirect_uris: clientTestData.redirect_uris,
         redirect_uri: "http://localhost:3000/notvalid",
         requested_scopes: ["scopeA"],
-        client_scopes: clientTestData.scopes,
-        state: "stateABCZYX",
+
         code_info: { sub: "12345" },
       });
 
@@ -331,7 +307,6 @@ describe("authorizationCodeFlow", () => {
       expect(decoded.sub).toBe("12345");
       expect(decoded.scopes).toBe("scopeA");
       expect(decoded.exp).toBeDefined();
-      expect(decoded.state).toBe("stateABCZYX");
       expect(decoded.redirect_uri).toBe("http://localhost:3000/notvalid");
     });
 
@@ -341,7 +316,7 @@ describe("authorizationCodeFlow", () => {
       setGenerateCodeFunc();
 
       acFlow = new CopyAuthorizationCodeFlow({
-        scope_required: true,
+        scopes_required: true,
         pkce_required: false,
       });
 
@@ -349,11 +324,9 @@ describe("authorizationCodeFlow", () => {
       try {
         await acFlow.getCode({
           response_type: "code",
-          client_redirect_uris: clientTestData.redirect_uris,
           redirect_uri: "http://localhost:3000/cb",
           requested_scopes: undefined,
-          client_scopes: clientTestData.scopes,
-          state: "stateABCZYX",
+
           code_info: { sub: "12345" },
         });
       } catch (error) {
@@ -371,17 +344,16 @@ describe("authorizationCodeFlow", () => {
       setGenerateCodeFunc();
 
       acFlow = new CopyAuthorizationCodeFlow({
+        ...copyClientData,
         pkce_required: false,
-        scope_required: false,
+        scopes_required: false,
       });
 
       const codeToken = await acFlow.getCode({
         response_type: "code",
-        client_redirect_uris: clientTestData.redirect_uris,
         redirect_uri: "http://localhost:3000/cb",
         requested_scopes: undefined,
-        client_scopes: clientTestData.scopes,
-        state: "stateABCZYX",
+
         code_info: { sub: "12345" },
       });
       const decoded = await decodeToken(codeToken);
@@ -389,90 +361,6 @@ describe("authorizationCodeFlow", () => {
       expect(decoded.sub).toBe("12345");
       expect(decoded.scopes).toBe("scopeA scopeB");
       expect(decoded.exp).toBeDefined();
-      expect(decoded.state).toBe("stateABCZYX");
-      expect(decoded.redirect_uri).toBe("http://localhost:3000/cb");
-    });
-
-    // --------------------------------------------------------------------------------------------
-
-    it("getCode() - passing an undefined client scopes and scope default required option", async () => {
-      setGenerateCodeFunc();
-
-      acFlow = new CopyAuthorizationCodeFlow({ pkce_required: false });
-
-      let errorExpected;
-      try {
-        await acFlow.getCode({
-          response_type: "code",
-          client_redirect_uris: clientTestData.redirect_uris,
-          redirect_uri: "http://localhost:3000/cb",
-          requested_scopes: ["scopeA"],
-          client_scopes: undefined,
-          state: "stateABCZYX",
-          code_info: { sub: "12345" },
-        });
-      } catch (error) {
-        errorExpected = error;
-      }
-      expect(errorExpected.error).toBe("invalid_scope");
-      expect(errorExpected.more_info).toBe(
-        "validateScopes(): The scopes requested are not valid for this client - this client has no scopes"
-      );
-    });
-
-    // --------------------------------------------------------------------------------------------
-
-    it("getCode() - passing an undefined state with default required option", async () => {
-      setGenerateCodeFunc();
-
-      acFlow = new CopyAuthorizationCodeFlow({ pkce_required: false });
-
-      let errorExpected;
-      try {
-        await acFlow.getCode({
-          response_type: "code",
-          client_redirect_uris: clientTestData.redirect_uris,
-          redirect_uri: "http://localhost:3000/cb",
-          requested_scopes: ["scopeA"],
-          client_scopes: clientTestData.scopes,
-          state: undefined,
-          code_info: { sub: "12345" },
-        });
-      } catch (error) {
-        errorExpected = error;
-      }
-      expect(errorExpected.error).toBe("server_error");
-      expect(errorExpected.more_info).toBe(
-        "validateState(): state must be a valid string"
-      );
-    });
-
-    // --------------------------------------------------------------------------------------------
-
-    it("getCode() - passing an undefined state with NOT required option", async () => {
-      setGenerateCodeFunc();
-
-      acFlow = new CopyAuthorizationCodeFlow({
-        state_required: false,
-        pkce_required: false,
-      });
-
-      const codeToken = await acFlow.getCode({
-        response_type: "code",
-        client_redirect_uris: clientTestData.redirect_uris,
-        redirect_uri: "http://localhost:3000/cb",
-        requested_scopes: ["scopeA"],
-        client_scopes: clientTestData.scopes,
-        state: undefined,
-        code_info: { sub: "12345" },
-      });
-
-      const decoded = await decodeToken(codeToken);
-      expect(codeToken).toBeTypeOf("string");
-      expect(decoded.sub).toBe("12345");
-      expect(decoded.scopes).toBe("scopeA");
-      expect(decoded.exp).toBeDefined();
-      expect(decoded.state).toBeUndefined();
       expect(decoded.redirect_uri).toBe("http://localhost:3000/cb");
     });
   });
@@ -483,17 +371,16 @@ describe("authorizationCodeFlow", () => {
     it("getToken() - passing an undefined code", async () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
-
-      acFlow = new CopyAuthorizationCodeFlow({ pkce_required: false });
+      acFlow = new CopyAuthorizationCodeFlow({
+        ...copyClientData,
+        pkce_required: false,
+      });
 
       let errorExpected;
       try {
         await acFlow.getToken({
           code: undefined,
-          client_grant_types: clientTestData.grant_types,
-          client_scopes: clientTestData.scopes,
           scopes_requested: ["scopeA"],
-          client_redirect_uris: clientTestData.redirect_uris,
           redirect_uri: "http://localhost:3000/cb",
           token_info: { sub: "12345" },
         });
@@ -510,15 +397,18 @@ describe("authorizationCodeFlow", () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode({ pkce_required: false });
-      acFlow = new CopyAuthorizationCodeFlow({ pkce_required: false });
+      const code = await getValidCode({
+        ...copyClientData,
+        pkce_required: false,
+      });
+      acFlow = new CopyAuthorizationCodeFlow({
+        ...copyClientData,
+        pkce_required: false,
+      });
 
       const token = await acFlow.getToken({
         code: code,
-        client_grant_types: clientTestData.grant_types,
-        client_scopes: clientTestData.scopes,
         scopes_requested: ["scopeA"],
-        client_redirect_uris: clientTestData.redirect_uris,
         redirect_uri: "http://localhost:3000/cb",
         token_info: { sub: "12345" },
       });
@@ -534,79 +424,24 @@ describe("authorizationCodeFlow", () => {
 
     // --------------------------------------------------------------------------------------------
 
-    it("getToken() - passing an undefined client grant types", async () => {
-      setValidateCodeFunc();
-      setGenerateTokenFunc();
-
-      const code = await getValidCode({ pkce_required: false });
-      acFlow = new CopyAuthorizationCodeFlow({ pkce_required: false });
-
-      let errorExpected;
-      try {
-        await acFlow.getToken({
-          code: code,
-          client_grant_types: undefined,
-          client_scopes: clientTestData.scopes,
-          scopes_requested: ["scopeA"],
-          client_redirect_uris: clientTestData.redirect_uris,
-          redirect_uri: "http://localhost:3000/cb",
-          token_info: { sub: "12345" },
-        });
-      } catch (error) {
-        errorExpected = error;
-      }
-      expect(errorExpected.error).toBe("unsupported_grant_type");
-      expect(errorExpected.more_info).toBe(
-        "validateGrant(): The client supports no grant types"
-      );
-    });
-
-    // --------------------------------------------------------------------------------------------
-
-    it("getToken() - passing an invalid client grant types", async () => {
-      setValidateCodeFunc();
-      setGenerateTokenFunc();
-
-      const code = await getValidCode({ pkce_required: false });
-      acFlow = new CopyAuthorizationCodeFlow({ pkce_required: false });
-
-      let errorExpected;
-      try {
-        await acFlow.getToken({
-          code: code,
-          client_grant_types: ["undefined"],
-          client_scopes: clientTestData.scopes,
-          scopes_requested: ["scopeA"],
-          client_redirect_uris: clientTestData.redirect_uris,
-          redirect_uri: "http://localhost:3000/cb",
-          token_info: { sub: "12345" },
-        });
-      } catch (error) {
-        errorExpected = error;
-      }
-      expect(errorExpected.error).toBe("unsupported_grant_type");
-      expect(errorExpected.more_info).toBe(
-        "validateGrant(): Not supported the grant type: authorization_code"
-      );
-    });
-
-    // --------------------------------------------------------------------------------------------
-
     it("getToken() - passing missing scope between several scopes", async () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode({ pkce_required: false });
-      acFlow = new CopyAuthorizationCodeFlow({ pkce_required: false });
+      const code = await getValidCode({
+        ...copyClientData,
+        pkce_required: false,
+      });
+      acFlow = new CopyAuthorizationCodeFlow({
+        ...copyClientData,
+        pkce_required: false,
+      });
 
       let errorExpected;
       try {
         await acFlow.getToken({
           code: code,
-          client_grant_types: clientTestData.grant_types,
-          client_scopes: clientTestData.scopes,
           scopes_requested: ["scopeA", "scopeC"],
-          client_redirect_uris: clientTestData.redirect_uris,
           redirect_uri: "http://localhost:3000/cb",
           token_info: { sub: "12345" },
         });
@@ -625,15 +460,19 @@ describe("authorizationCodeFlow", () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode({ pkce_required: false });
-      acFlow = new CopyAuthorizationCodeFlow({ pkce_required: false });
+      const code = await getValidCode({
+        ...copyClientData,
+        pkce_required: false,
+      });
+      acFlow = new CopyAuthorizationCodeFlow({
+        ...copyClientData,
+        pkce_required: false,
+      });
 
       const token = await acFlow.getToken({
         code: code,
-        client_grant_types: clientTestData.grant_types,
-        client_scopes: clientTestData.scopes,
+
         scopes_requested: ["scopeA", "scopeB"],
-        client_redirect_uris: clientTestData.redirect_uris,
         redirect_uri: "http://localhost:3000/cb",
         token_info: { sub: "12345" },
       });
@@ -652,18 +491,20 @@ describe("authorizationCodeFlow", () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode({ pkce_required: false });
+      const code = await getValidCode({
+        ...copyClientData,
+        pkce_required: false,
+      });
       acFlow = new CopyAuthorizationCodeFlow({
+        ...copyClientData,
         match_all_scopes: false,
         pkce_required: false,
       });
 
       const token = await acFlow.getToken({
         code: code,
-        client_grant_types: clientTestData.grant_types,
-        client_scopes: clientTestData.scopes,
+
         scopes_requested: ["scopeB", "scopeC"],
-        client_redirect_uris: clientTestData.redirect_uris,
         redirect_uri: "http://localhost:3000/cb",
         token_info: { sub: "12345" },
       });
@@ -682,18 +523,20 @@ describe("authorizationCodeFlow", () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode({ pkce_required: false });
+      const code = await getValidCode({
+        ...copyClientData,
+        pkce_required: false,
+      });
       acFlow = new CopyAuthorizationCodeFlow({
+        ...copyClientData,
         match_all_scopes: false,
         pkce_required: false,
       });
 
       const token = await acFlow.getToken({
         code: code,
-        client_grant_types: clientTestData.grant_types,
-        client_scopes: clientTestData.scopes,
+
         scopes_requested: ["scopeB", "scopeA"],
-        client_redirect_uris: clientTestData.redirect_uris,
         redirect_uri: "http://localhost:3000/cb",
         token_info: { sub: "12345" },
       });
@@ -712,17 +555,20 @@ describe("authorizationCodeFlow", () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode({ pkce_required: false });
-      acFlow = new CopyAuthorizationCodeFlow({ pkce_required: false });
+      const code = await getValidCode({
+        ...copyClientData,
+        pkce_required: false,
+      });
+      acFlow = new CopyAuthorizationCodeFlow({
+        ...copyClientData,
+        pkce_required: false,
+      });
 
       let errorExpected;
       try {
         await acFlow.getToken({
           code: code,
-          client_grant_types: clientTestData.grant_types,
-          client_scopes: clientTestData.scopes,
           scopes_requested: ["scopeA", "scopeC"],
-          client_redirect_uris: clientTestData.redirect_uris,
           redirect_uri: "http://localhost:3000/cb",
           token_info: { sub: "12345" },
         });
@@ -741,9 +587,13 @@ describe("authorizationCodeFlow", () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode({ pkce_required: false });
+      const code = await getValidCode({
+        ...copyClientData,
+        pkce_required: false,
+      });
       acFlow = new CopyAuthorizationCodeFlow({
-        scope_required: true,
+        ...copyClientData,
+        scopes_required: true,
         pkce_required: false,
       });
 
@@ -751,10 +601,7 @@ describe("authorizationCodeFlow", () => {
       try {
         await acFlow.getToken({
           code: code,
-          client_grant_types: clientTestData.grant_types,
-          client_scopes: clientTestData.scopes,
           scopes_requested: undefined,
-          client_redirect_uris: clientTestData.redirect_uris,
           redirect_uri: "http://localhost:3000/cb",
           token_info: { sub: "12345" },
         });
@@ -773,9 +620,13 @@ describe("authorizationCodeFlow", () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode({ pkce_required: false });
+      const code = await getValidCode({
+        ...copyClientData,
+        pkce_required: false,
+      });
       acFlow = new CopyAuthorizationCodeFlow({
-        scope_required: true,
+        ...copyClientData,
+        scopes_required: true,
         pkce_required: false,
       });
 
@@ -783,10 +634,7 @@ describe("authorizationCodeFlow", () => {
       try {
         await acFlow.getToken({
           code: code,
-          client_grant_types: clientTestData.grant_types,
-          client_scopes: clientTestData.scopes,
           scopes_requested: [],
-          client_redirect_uris: clientTestData.redirect_uris,
           redirect_uri: "http://localhost:3000/cb",
           token_info: { sub: "12345" },
         });
@@ -805,18 +653,20 @@ describe("authorizationCodeFlow", () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode({ pkce_required: false });
+      const code = await getValidCode({
+        ...copyClientData,
+        pkce_required: false,
+      });
       acFlow = new CopyAuthorizationCodeFlow({
-        scope_required: false,
+        ...copyClientData,
+        scopes_required: false,
         pkce_required: false,
       });
 
       const token = await acFlow.getToken({
         code: code,
-        client_grant_types: clientTestData.grant_types,
-        client_scopes: clientTestData.scopes,
+
         scopes_requested: undefined,
-        client_redirect_uris: clientTestData.redirect_uris,
         redirect_uri: "http://localhost:3000/cb",
         token_info: { sub: "12345" },
       });
@@ -835,18 +685,20 @@ describe("authorizationCodeFlow", () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode({ pkce_required: false });
+      const code = await getValidCode({
+        ...copyClientData,
+        pkce_required: false,
+      });
       acFlow = new CopyAuthorizationCodeFlow({
-        scope_required: false,
+        ...copyClientData,
+        scopes_required: false,
         pkce_required: false,
       });
 
       const token = await acFlow.getToken({
         code: code,
-        client_grant_types: clientTestData.grant_types,
-        client_scopes: clientTestData.scopes,
+
         scopes_requested: [],
-        client_redirect_uris: clientTestData.redirect_uris,
         redirect_uri: "http://localhost:3000/cb",
         token_info: { sub: "12345" },
       });
@@ -865,17 +717,20 @@ describe("authorizationCodeFlow", () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode({ pkce_required: false });
-      acFlow = new CopyAuthorizationCodeFlow({ pkce_required: false });
+      const code = await getValidCode({
+        ...copyClientData,
+        pkce_required: false,
+      });
+      acFlow = new CopyAuthorizationCodeFlow({
+        ...copyClientData,
+        pkce_required: false,
+      });
 
       let errorExpected;
       try {
         await acFlow.getToken({
           code: code,
-          client_grant_types: clientTestData.grant_types,
-          client_scopes: clientTestData.scopes,
-          scopes_requested: [],
-          client_redirect_uris: clientTestData.redirect_uris,
+          scopes_requested: ["scopeA"],
           redirect_uri: "http://localhost:3000/notavalidcb",
           token_info: { sub: "12345" },
         });
@@ -890,57 +745,31 @@ describe("authorizationCodeFlow", () => {
 
     // --------------------------------------------------------------------------------------------
 
-    it("getToken() - passing an undefined client redirect_uris", async () => {
-      setValidateCodeFunc();
-      setGenerateTokenFunc();
-
-      const code = await getValidCode({ pkce_required: false });
-      acFlow = new CopyAuthorizationCodeFlow({ pkce_required: false });
-
-      let errorExpected;
-      try {
-        await acFlow.getToken({
-          code: code,
-          client_grant_types: clientTestData.grant_types,
-          client_scopes: clientTestData.scopes,
-          scopes_requested: [],
-          client_redirect_uris: undefined,
-          redirect_uri: "http://localhost:3000/cb",
-          token_info: { sub: "12345" },
-        });
-      } catch (error) {
-        errorExpected = error;
-      }
-      expect(errorExpected.error).toBe("server_error");
-      expect(errorExpected.more_info).toBe(
-        "validateRedirectUri(): redirect_uris must be an array of strings containing valid URIs"
-      );
-    });
-
-    // --------------------------------------------------------------------------------------------
-
     it("getToken() - passing an undefined callback", async () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode({ pkce_required: false });
-      acFlow = new CopyAuthorizationCodeFlow({ pkce_required: false });
+      const code = await getValidCode({
+        ...copyClientData,
+        pkce_required: false,
+      });
+      acFlow = new CopyAuthorizationCodeFlow({
+        ...copyClientData,
+        pkce_required: false,
+      });
 
       let errorExpected;
       try {
         await acFlow.getToken({
           code: code,
-          client_grant_types: clientTestData.grant_types,
-          client_scopes: clientTestData.scopes,
           scopes_requested: ["scopeA"],
-          client_redirect_uris: clientTestData.redirect_uris,
           redirect_uri: undefined,
           token_info: { sub: "12345" },
         });
       } catch (error) {
         errorExpected = error;
       }
-      expect(errorExpected.error).toBe("server_error");
+      expect(errorExpected.error).toBe("invalid_request");
       expect(errorExpected.more_info).toBe(
         "validateRedirectUri(): redirect_uri must be a valid string containing a valid URI"
       );
@@ -952,17 +781,20 @@ describe("authorizationCodeFlow", () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode({ pkce_required: false });
-      acFlow = new CopyAuthorizationCodeFlow({ pkce_required: false });
+      const code = await getValidCode({
+        ...copyClientData,
+        pkce_required: false,
+      });
+      acFlow = new CopyAuthorizationCodeFlow({
+        ...copyClientData,
+        pkce_required: false,
+      });
 
       let errorExpected;
       try {
         await acFlow.getToken({
           code: code,
-          client_grant_types: clientTestData.grant_types,
-          client_scopes: clientTestData.scopes,
           scopes_requested: ["scopeA"],
-          client_redirect_uris: clientTestData.redirect_uris,
           redirect_uri: "http://localhost:3000/notavalidcb",
           token_info: { sub: "12345" },
         });
@@ -982,17 +814,15 @@ describe("authorizationCodeFlow", () => {
     it("getCode() - with PKCE - passing a wrong type of response code", async () => {
       setGenerateCodeFunc();
 
-      acFlow = new CopyAuthorizationCodeFlow();
+      acFlow = new CopyAuthorizationCodeFlow(copyClientData);
 
       let errorExpected;
       try {
         await acFlow.getCode({
           response_type: "notacode",
-          client_redirect_uris: clientTestData.redirect_uris,
           redirect_uri: "http://localhost:3000/cb",
           requested_scopes: ["scopeA"],
-          client_scopes: clientTestData.scopes,
-          state: "stateABCZYX",
+
           code_info: { sub: "12345" },
           code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
           code_challenge_method: "S256",
@@ -1011,17 +841,14 @@ describe("authorizationCodeFlow", () => {
     it("getCode() - with PKCE - passing a callback not valid for the client", async () => {
       setGenerateCodeFunc();
 
-      acFlow = new CopyAuthorizationCodeFlow();
+      acFlow = new CopyAuthorizationCodeFlow(copyClientData);
 
       let errorExpected;
       try {
         await acFlow.getCode({
           response_type: "code",
-          client_redirect_uris: clientTestData.redirect_uris,
           redirect_uri: "http://localhost:3000/notvalid",
           requested_scopes: ["scopeA"],
-          client_scopes: clientTestData.scopes,
-          state: "stateABCZYX",
           code_info: { sub: "12345" },
           code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
           code_challenge_method: "S256",
@@ -1037,49 +864,18 @@ describe("authorizationCodeFlow", () => {
 
     // --------------------------------------------------------------------------------------------
 
-    it("getCode() - with PKCE - passing an undefined client redirect_uris", async () => {
-      setGenerateCodeFunc();
-
-      acFlow = new CopyAuthorizationCodeFlow();
-
-      let errorExpected;
-      try {
-        await acFlow.getCode({
-          response_type: "code",
-          client_redirect_uris: undefined,
-          redirect_uri: "http://localhost:3000/cb",
-          requested_scopes: ["scopeA"],
-          client_scopes: clientTestData.scopes,
-          state: "stateABCZYX",
-          code_info: { sub: "12345" },
-          code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
-          code_challenge_method: "S256",
-        });
-      } catch (error) {
-        errorExpected = error;
-      }
-      expect(errorExpected.error).toBe("server_error");
-      expect(errorExpected.more_info).toBe(
-        "validateRedirectUri(): redirect_uris must be an array of strings containing valid URIs"
-      );
-    });
-
-    // --------------------------------------------------------------------------------------------
-
     it("getCode() - with PKCE - passing an undefined callback", async () => {
       setGenerateCodeFunc();
 
-      acFlow = new CopyAuthorizationCodeFlow();
+      acFlow = new CopyAuthorizationCodeFlow(copyClientData);
 
       let errorExpected;
       try {
         await acFlow.getCode({
           response_type: "code",
-          client_redirect_uris: clientTestData.redirect_uris,
           redirect_uri: undefined,
           requested_scopes: ["scopeA"],
-          client_scopes: clientTestData.scopes,
-          state: "stateABCZYX",
+
           code_info: { sub: "12345" },
           code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
           code_challenge_method: "S256",
@@ -1087,7 +883,7 @@ describe("authorizationCodeFlow", () => {
       } catch (error) {
         errorExpected = error;
       }
-      expect(errorExpected.error).toBe("server_error");
+      expect(errorExpected.error).toBe("invalid_request");
       expect(errorExpected.more_info).toBe(
         "validateRedirectUri(): redirect_uri must be a valid string containing a valid URI"
       );
@@ -1099,16 +895,14 @@ describe("authorizationCodeFlow", () => {
       setGenerateCodeFunc();
 
       acFlow = new CopyAuthorizationCodeFlow({
+        ...copyClientData,
         redirect_uri_required: false,
       });
 
       const codeToken = await acFlow.getCode({
         response_type: "code",
-        client_redirect_uris: clientTestData.redirect_uris,
         redirect_uri: "http://localhost:3000/notvalid",
         requested_scopes: ["scopeA"],
-        client_scopes: clientTestData.scopes,
-        state: "stateABCZYX",
         code_info: { sub: "12345" },
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
         code_challenge_method: "S256",
@@ -1119,7 +913,6 @@ describe("authorizationCodeFlow", () => {
       expect(decoded.sub).toBe("12345");
       expect(decoded.scopes).toBe("scopeA");
       expect(decoded.exp).toBeDefined();
-      expect(decoded.state).toBe("stateABCZYX");
       expect(decoded.redirect_uri).toBe("http://localhost:3000/notvalid");
     });
 
@@ -1129,18 +922,16 @@ describe("authorizationCodeFlow", () => {
       setGenerateCodeFunc();
 
       acFlow = new CopyAuthorizationCodeFlow({
-        scope_required: true,
+        scopes_required: true,
       });
 
       let errorExpected;
       try {
         await acFlow.getCode({
           response_type: "code",
-          client_redirect_uris: clientTestData.redirect_uris,
           redirect_uri: "http://localhost:3000/cb",
           requested_scopes: undefined,
-          client_scopes: clientTestData.scopes,
-          state: "stateABCZYX",
+
           code_info: { sub: "12345" },
           code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
           code_challenge_method: "S256",
@@ -1159,15 +950,15 @@ describe("authorizationCodeFlow", () => {
     it("getCode() - with PKCE - passing an undefined scope and scope NOT require option", async () => {
       setGenerateCodeFunc();
 
-      acFlow = new CopyAuthorizationCodeFlow();
+      acFlow = new CopyAuthorizationCodeFlow({
+        ...copyClientData,
+        scopes_required: false,
+      });
 
       const codeToken = await acFlow.getCode({
         response_type: "code",
-        client_redirect_uris: clientTestData.redirect_uris,
         redirect_uri: "http://localhost:3000/cb",
         requested_scopes: undefined,
-        client_scopes: clientTestData.scopes,
-        state: "stateABCZYX",
         code_info: { sub: "12345" },
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
         code_challenge_method: "S256",
@@ -1178,95 +969,6 @@ describe("authorizationCodeFlow", () => {
       expect(decoded.sub).toBe("12345");
       expect(decoded.scopes).toBe("scopeA scopeB");
       expect(decoded.exp).toBeDefined();
-      expect(decoded.state).toBe("stateABCZYX");
-      expect(decoded.redirect_uri).toBe("http://localhost:3000/cb");
-    });
-
-    // --------------------------------------------------------------------------------------------
-
-    it("getCode() - with PKCE - passing an undefined client scopes and scope default required option", async () => {
-      setGenerateCodeFunc();
-
-      acFlow = new CopyAuthorizationCodeFlow();
-
-      let errorExpected;
-      try {
-        await acFlow.getCode({
-          response_type: "code",
-          client_redirect_uris: clientTestData.redirect_uris,
-          redirect_uri: "http://localhost:3000/cb",
-          requested_scopes: ["scopeA"],
-          client_scopes: undefined,
-          state: "stateABCZYX",
-          code_info: { sub: "12345" },
-          code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
-          code_challenge_method: "S256",
-        });
-      } catch (error) {
-        errorExpected = error;
-      }
-      expect(errorExpected.error).toBe("invalid_scope");
-      expect(errorExpected.more_info).toBe(
-        "validateScopes(): The scopes requested are not valid for this client - this client has no scopes"
-      );
-    });
-
-    // --------------------------------------------------------------------------------------------
-
-    it("getCode() - with PKCE - passing an undefined state with default required option", async () => {
-      setGenerateCodeFunc();
-
-      acFlow = new CopyAuthorizationCodeFlow();
-
-      let errorExpected;
-      try {
-        await acFlow.getCode({
-          response_type: "code",
-          client_redirect_uris: clientTestData.redirect_uris,
-          redirect_uri: "http://localhost:3000/cb",
-          requested_scopes: ["scopeA"],
-          client_scopes: clientTestData.scopes,
-          state: undefined,
-          code_info: { sub: "12345" },
-          code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
-          code_challenge_method: "S256",
-        });
-      } catch (error) {
-        errorExpected = error;
-      }
-      expect(errorExpected.error).toBe("server_error");
-      expect(errorExpected.more_info).toBe(
-        "validateState(): state must be a valid string"
-      );
-    });
-
-    // --------------------------------------------------------------------------------------------
-
-    it("getCode() - with PKCE - passing an undefined state with NOT required option", async () => {
-      setGenerateCodeFunc();
-
-      acFlow = new CopyAuthorizationCodeFlow({
-        state_required: false,
-      });
-
-      const codeToken = await acFlow.getCode({
-        response_type: "code",
-        client_redirect_uris: clientTestData.redirect_uris,
-        redirect_uri: "http://localhost:3000/cb",
-        requested_scopes: ["scopeA"],
-        client_scopes: clientTestData.scopes,
-        state: undefined,
-        code_info: { sub: "12345" },
-        code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
-        code_challenge_method: "S256",
-      });
-
-      const decoded = await decodeToken(codeToken);
-      expect(codeToken).toBeTypeOf("string");
-      expect(decoded.sub).toBe("12345");
-      expect(decoded.scopes).toBe("scopeA");
-      expect(decoded.exp).toBeDefined();
-      expect(decoded.state).toBeUndefined();
       expect(decoded.redirect_uri).toBe("http://localhost:3000/cb");
     });
 
@@ -1276,6 +978,7 @@ describe("authorizationCodeFlow", () => {
       setGenerateCodeFunc();
 
       acFlow = new CopyAuthorizationCodeFlow({
+        ...copyClientData,
         mapping_challenge_methods: {
           S256: "sha256",
         },
@@ -1283,22 +986,19 @@ describe("authorizationCodeFlow", () => {
 
       const codeToken = await acFlow.getCode({
         response_type: "code",
-        client_redirect_uris: clientTestData.redirect_uris,
         redirect_uri: "http://localhost:3000/cb",
         requested_scopes: ["scopeA"],
-        client_scopes: clientTestData.scopes,
-        state: "wqeasdzxc",
+
         code_info: { sub: "12345" },
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
         code_challenge_method: "S256",
       });
-
       const decoded = await decodeToken(codeToken);
+
       expect(codeToken).toBeTypeOf("string");
       expect(decoded.sub).toBe("12345");
       expect(decoded.scopes).toBe("scopeA");
       expect(decoded.exp).toBeDefined();
-      expect(decoded.state).toBe("wqeasdzxc");
       expect(decoded.redirect_uri).toBe("http://localhost:3000/cb");
     });
 
@@ -1310,17 +1010,16 @@ describe("authorizationCodeFlow", () => {
       let errorExpected;
       try {
         acFlow = new CopyAuthorizationCodeFlow({
+          ...copyClientData,
           mapping_challenge_methods: {
             S258: "sha256",
           },
         });
         const codeToken = await acFlow.getCode({
           response_type: "code",
-          client_redirect_uris: clientTestData.redirect_uris,
           redirect_uri: "http://localhost:3000/cb",
           requested_scopes: ["scopeA"],
-          client_scopes: clientTestData.scopes,
-          state: "wqeasdzxc",
+
           code_info: { sub: "12345" },
           code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
           code_challenge_method: "S256",
@@ -1341,15 +1040,14 @@ describe("authorizationCodeFlow", () => {
       setGenerateCodeFunc();
 
       acFlow = new CopyAuthorizationCodeFlow({
+        ...copyClientData,
         allow_plain_pkce_method: true,
       });
       const codeToken = await acFlow.getCode({
         response_type: "code",
-        client_redirect_uris: clientTestData.redirect_uris,
         redirect_uri: "http://localhost:3000/cb",
         requested_scopes: ["scopeA"],
-        client_scopes: clientTestData.scopes,
-        state: "wqeasdzxc",
+
         code_info: { sub: "12345" },
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
         code_challenge_method: "plain",
@@ -1359,7 +1057,7 @@ describe("authorizationCodeFlow", () => {
       expect(decoded.sub).toBe("12345");
       expect(decoded.scopes).toBe("scopeA");
       expect(decoded.exp).toBeDefined();
-      expect(decoded.state).toBe("wqeasdzxc");
+      
       expect(decoded.redirect_uri).toBe("http://localhost:3000/cb");
     });
 
@@ -1370,14 +1068,12 @@ describe("authorizationCodeFlow", () => {
 
       let errorExpected;
       try {
-        acFlow = new CopyAuthorizationCodeFlow();
+        acFlow = new CopyAuthorizationCodeFlow(copyClientData);
         const codeToken = await acFlow.getCode({
           response_type: "code",
-          client_redirect_uris: clientTestData.redirect_uris,
           redirect_uri: "http://localhost:3000/cb",
           requested_scopes: ["scopeA"],
-          client_scopes: clientTestData.scopes,
-          state: "wqeasdzxc",
+
           code_info: { sub: "12345" },
           code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
           code_challenge_method: "plain",
@@ -1399,14 +1095,12 @@ describe("authorizationCodeFlow", () => {
 
       let errorExpected;
       try {
-        acFlow = new CopyAuthorizationCodeFlow();
+        acFlow = new CopyAuthorizationCodeFlow(copyClientData);
         const codeToken = await acFlow.getCode({
           response_type: "code",
-          client_redirect_uris: clientTestData.redirect_uris,
           redirect_uri: "http://localhost:3000/cb",
           requested_scopes: ["scopeA"],
-          client_scopes: clientTestData.scopes,
-          state: "wqeasdzxc",
+
           code_info: { sub: "12345" },
         });
       } catch (error) {
@@ -1424,14 +1118,12 @@ describe("authorizationCodeFlow", () => {
     it("getCode() - with PKCE - not informing pkce code challenge method", async () => {
       setGenerateCodeFunc();
 
-      acFlow = new CopyAuthorizationCodeFlow();
+      acFlow = new CopyAuthorizationCodeFlow(copyClientData);
       const codeToken = await acFlow.getCode({
         response_type: "code",
-        client_redirect_uris: clientTestData.redirect_uris,
         redirect_uri: "http://localhost:3000/cb",
         requested_scopes: ["scopeA"],
-        client_scopes: clientTestData.scopes,
-        state: "wqeasdzxc",
+
         code_info: { sub: "12345" },
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
       });
@@ -1441,7 +1133,7 @@ describe("authorizationCodeFlow", () => {
       expect(decoded.sub).toBe("12345");
       expect(decoded.scopes).toBe("scopeA");
       expect(decoded.exp).toBeDefined();
-      expect(decoded.state).toBe("wqeasdzxc");
+      
       expect(decoded.redirect_uri).toBe("http://localhost:3000/cb");
     });
   });
@@ -1453,16 +1145,13 @@ describe("authorizationCodeFlow", () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      acFlow = new CopyAuthorizationCodeFlow();
+      acFlow = new CopyAuthorizationCodeFlow(copyClientData);
 
       let errorExpected;
       try {
         await acFlow.getToken({
           code: undefined,
-          client_grant_types: clientTestData.grant_types,
-          client_scopes: clientTestData.scopes,
           scopes_requested: ["scopeA"],
-          client_redirect_uris: clientTestData.redirect_uris,
           redirect_uri: "http://localhost:3000/cb",
           token_info: { sub: "12345" },
           code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
@@ -1483,18 +1172,16 @@ describe("authorizationCodeFlow", () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode(undefined, {
+      const code = await getValidCode(copyClientData, {
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
         code_challenge_method: "S256",
       });
-      acFlow = new CopyAuthorizationCodeFlow();
+      acFlow = new CopyAuthorizationCodeFlow(copyClientData);
 
       const token = await acFlow.getToken({
         code: code,
-        client_grant_types: clientTestData.grant_types,
-        client_scopes: clientTestData.scopes,
+
         scopes_requested: ["scopeA"],
-        client_redirect_uris: clientTestData.redirect_uris,
         redirect_uri: "http://localhost:3000/cb",
         token_info: { sub: "12345" },
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
@@ -1514,96 +1201,21 @@ describe("authorizationCodeFlow", () => {
 
     // --------------------------------------------------------------------------------------------
 
-    it("getToken() - with PKCE - passing an undefined client grant types", async () => {
-      setValidateCodeFunc();
-      setGenerateTokenFunc();
-
-      const code = await getValidCode(undefined, {
-        code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
-        code_challenge_method: "S256",
-      });
-      acFlow = new CopyAuthorizationCodeFlow();
-
-      let errorExpected;
-      try {
-        await acFlow.getToken({
-          code: code,
-          client_grant_types: undefined,
-          client_scopes: clientTestData.scopes,
-          scopes_requested: ["scopeA"],
-          client_redirect_uris: clientTestData.redirect_uris,
-          redirect_uri: "http://localhost:3000/cb",
-          token_info: { sub: "12345" },
-          code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
-          code_challenge_method: "S256",
-          code_verifier:
-            "BB32OXv3qmG6OIe3sTZHjbbP3NW.wltvQ_k73ZHlA42uELwbqX3Xlm4jx_Bv8QQN3sBHMW2c2NSyDYuB0YUFTV2-XjwbfCOK8F_UfbU~72EWJ0dGFOs2.9~giG0TEFXk",
-        });
-      } catch (error) {
-        errorExpected = error;
-      }
-      expect(errorExpected.error).toBe("unsupported_grant_type");
-      expect(errorExpected.more_info).toBe(
-        "validateGrant(): The client supports no grant types"
-      );
-    });
-
-    // --------------------------------------------------------------------------------------------
-
-    it("getToken() - with PKCE - passing an invalid client grant types", async () => {
-      setValidateCodeFunc();
-      setGenerateTokenFunc();
-
-      const code = await getValidCode(undefined, {
-        code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
-        code_challenge_method: "S256",
-      });
-      acFlow = new CopyAuthorizationCodeFlow();
-
-      let errorExpected;
-      try {
-        await acFlow.getToken({
-          code: code,
-          client_grant_types: ["undefined"],
-          client_scopes: clientTestData.scopes,
-          scopes_requested: ["scopeA"],
-          client_redirect_uris: clientTestData.redirect_uris,
-          redirect_uri: "http://localhost:3000/cb",
-          token_info: { sub: "12345" },
-          code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
-          code_challenge_method: "S256",
-          code_verifier:
-            "BB32OXv3qmG6OIe3sTZHjbbP3NW.wltvQ_k73ZHlA42uELwbqX3Xlm4jx_Bv8QQN3sBHMW2c2NSyDYuB0YUFTV2-XjwbfCOK8F_UfbU~72EWJ0dGFOs2.9~giG0TEFXk",
-        });
-      } catch (error) {
-        errorExpected = error;
-      }
-      expect(errorExpected.error).toBe("unsupported_grant_type");
-      expect(errorExpected.more_info).toBe(
-        "validateGrant(): Not supported the grant type: authorization_code"
-      );
-    });
-
-    // --------------------------------------------------------------------------------------------
-
     it("getToken() - with PKCE - passing missing scope between several scopes", async () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode(undefined, {
+      const code = await getValidCode(copyClientData, {
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
         code_challenge_method: "S256",
       });
-      acFlow = new CopyAuthorizationCodeFlow();
+      acFlow = new CopyAuthorizationCodeFlow(copyClientData);
 
       let errorExpected;
       try {
         await acFlow.getToken({
           code: code,
-          client_grant_types: clientTestData.grant_types,
-          client_scopes: clientTestData.scopes,
           scopes_requested: ["scopeA", "scopeC"],
-          client_redirect_uris: clientTestData.redirect_uris,
           redirect_uri: "http://localhost:3000/cb",
           token_info: { sub: "12345" },
           code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
@@ -1626,18 +1238,16 @@ describe("authorizationCodeFlow", () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode(undefined, {
+      const code = await getValidCode(copyClientData, {
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
         code_challenge_method: "S256",
       });
-      acFlow = new CopyAuthorizationCodeFlow();
+      acFlow = new CopyAuthorizationCodeFlow(copyClientData);
 
       const token = await acFlow.getToken({
         code: code,
-        client_grant_types: clientTestData.grant_types,
-        client_scopes: clientTestData.scopes,
+
         scopes_requested: ["scopeA", "scopeB"],
-        client_redirect_uris: clientTestData.redirect_uris,
         redirect_uri: "http://localhost:3000/cb",
         token_info: { sub: "12345" },
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
@@ -1660,20 +1270,19 @@ describe("authorizationCodeFlow", () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode(undefined, {
+      const code = await getValidCode(copyClientData, {
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
         code_challenge_method: "S256",
       });
       acFlow = new CopyAuthorizationCodeFlow({
+        ...copyClientData,
         match_all_scopes: false,
       });
 
       const token = await acFlow.getToken({
         code: code,
-        client_grant_types: clientTestData.grant_types,
-        client_scopes: clientTestData.scopes,
+
         scopes_requested: ["scopeB", "scopeC"],
-        client_redirect_uris: clientTestData.redirect_uris,
         redirect_uri: "http://localhost:3000/cb",
         token_info: { sub: "12345" },
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
@@ -1696,20 +1305,19 @@ describe("authorizationCodeFlow", () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode(undefined, {
+      const code = await getValidCode(copyClientData, {
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
         code_challenge_method: "S256",
       });
       acFlow = new CopyAuthorizationCodeFlow({
+        ...copyClientData,
         match_all_scopes: false,
       });
 
       const token = await acFlow.getToken({
         code: code,
-        client_grant_types: clientTestData.grant_types,
-        client_scopes: clientTestData.scopes,
+
         scopes_requested: ["scopeB", "scopeA"],
-        client_redirect_uris: clientTestData.redirect_uris,
         redirect_uri: "http://localhost:3000/cb",
         token_info: { sub: "12345" },
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
@@ -1732,20 +1340,17 @@ describe("authorizationCodeFlow", () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode(undefined, {
+      const code = await getValidCode(copyClientData, {
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
         code_challenge_method: "S256",
       });
-      acFlow = new CopyAuthorizationCodeFlow();
+      acFlow = new CopyAuthorizationCodeFlow(copyClientData);
 
       let errorExpected;
       try {
         await acFlow.getToken({
           code: code,
-          client_grant_types: clientTestData.grant_types,
-          client_scopes: clientTestData.scopes,
           scopes_requested: ["scopeA", "scopeC"],
-          client_redirect_uris: clientTestData.redirect_uris,
           redirect_uri: "http://localhost:3000/cb",
           token_info: { sub: "12345" },
           code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
@@ -1768,22 +1373,20 @@ describe("authorizationCodeFlow", () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode(undefined, {
+      const code = await getValidCode(copyClientData, {
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
         code_challenge_method: "S256",
       });
       acFlow = new CopyAuthorizationCodeFlow({
-        scope_required: true,
+        ...copyClientData,
+        scopes_required: true,
       });
 
       let errorExpected;
       try {
         await acFlow.getToken({
           code: code,
-          client_grant_types: clientTestData.grant_types,
-          client_scopes: clientTestData.scopes,
           scopes_requested: undefined,
-          client_redirect_uris: clientTestData.redirect_uris,
           redirect_uri: "http://localhost:3000/cb",
           token_info: { sub: "12345" },
           code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
@@ -1806,22 +1409,20 @@ describe("authorizationCodeFlow", () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode(undefined, {
+      const code = await getValidCode(copyClientData, {
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
         code_challenge_method: "S256",
       });
       acFlow = new CopyAuthorizationCodeFlow({
-        scope_required: true,
+        ...copyClientData,
+        scopes_required: true,
       });
 
       let errorExpected;
       try {
         await acFlow.getToken({
           code: code,
-          client_grant_types: clientTestData.grant_types,
-          client_scopes: clientTestData.scopes,
           scopes_requested: [],
-          client_redirect_uris: clientTestData.redirect_uris,
           redirect_uri: "http://localhost:3000/cb",
           token_info: { sub: "12345" },
           code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
@@ -1844,20 +1445,19 @@ describe("authorizationCodeFlow", () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode(undefined, {
+      const code = await getValidCode(copyClientData, {
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
         code_challenge_method: "S256",
       });
       acFlow = new CopyAuthorizationCodeFlow({
-        scope_required: false,
+        ...copyClientData,
+        scopes_required: false,
       });
 
       const token = await acFlow.getToken({
         code: code,
-        client_grant_types: clientTestData.grant_types,
-        client_scopes: clientTestData.scopes,
+
         scopes_requested: undefined,
-        client_redirect_uris: clientTestData.redirect_uris,
         redirect_uri: "http://localhost:3000/cb",
         token_info: { sub: "12345" },
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
@@ -1880,20 +1480,18 @@ describe("authorizationCodeFlow", () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode(undefined, {
+      const code = await getValidCode(copyClientData, {
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
         code_challenge_method: "S256",
       });
       acFlow = new CopyAuthorizationCodeFlow({
-        scope_required: false,
+        ...copyClientData,
+        scopes_required: false,
       });
 
       const token = await acFlow.getToken({
         code: code,
-        client_grant_types: clientTestData.grant_types,
-        client_scopes: clientTestData.scopes,
         scopes_requested: [],
-        client_redirect_uris: clientTestData.redirect_uris,
         redirect_uri: "http://localhost:3000/cb",
         token_info: { sub: "12345" },
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
@@ -1916,20 +1514,17 @@ describe("authorizationCodeFlow", () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode(undefined, {
+      const code = await getValidCode(copyClientData, {
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
         code_challenge_method: "S256",
       });
-      acFlow = new CopyAuthorizationCodeFlow();
+      acFlow = new CopyAuthorizationCodeFlow(copyClientData);
 
       let errorExpected;
       try {
         await acFlow.getToken({
           code: code,
-          client_grant_types: clientTestData.grant_types,
-          client_scopes: clientTestData.scopes,
-          scopes_requested: [],
-          client_redirect_uris: clientTestData.redirect_uris,
+          scopes_requested: ["scopeA"],
           redirect_uri: "http://localhost:3000/notavalidcb",
           token_info: { sub: "12345" },
           code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
@@ -1948,60 +1543,21 @@ describe("authorizationCodeFlow", () => {
 
     // --------------------------------------------------------------------------------------------
 
-    it("getToken() - with PKCE - passing an undefined client redirect_uris", async () => {
-      setValidateCodeFunc();
-      setGenerateTokenFunc();
-
-      const code = await getValidCode(undefined, {
-        code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
-        code_challenge_method: "S256",
-      });
-      acFlow = new CopyAuthorizationCodeFlow();
-
-      let errorExpected;
-      try {
-        await acFlow.getToken({
-          code: code,
-          client_grant_types: clientTestData.grant_types,
-          client_scopes: clientTestData.scopes,
-          scopes_requested: [],
-          client_redirect_uris: undefined,
-          redirect_uri: "http://localhost:3000/cb",
-          token_info: { sub: "12345" },
-          code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
-          code_challenge_method: "S256",
-          code_verifier:
-            "BB32OXv3qmG6OIe3sTZHjbbP3NW.wltvQ_k73ZHlA42uELwbqX3Xlm4jx_Bv8QQN3sBHMW2c2NSyDYuB0YUFTV2-XjwbfCOK8F_UfbU~72EWJ0dGFOs2.9~giG0TEFXk",
-        });
-      } catch (error) {
-        errorExpected = error;
-      }
-      expect(errorExpected.error).toBe("server_error");
-      expect(errorExpected.more_info).toBe(
-        "validateRedirectUri(): redirect_uris must be an array of strings containing valid URIs"
-      );
-    });
-
-    // --------------------------------------------------------------------------------------------
-
     it("getToken() - with PKCE - passing an undefined callback", async () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode(undefined, {
+      const code = await getValidCode(copyClientData, {
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
         code_challenge_method: "S256",
       });
-      acFlow = new CopyAuthorizationCodeFlow();
+      acFlow = new CopyAuthorizationCodeFlow(copyClientData);
 
       let errorExpected;
       try {
         await acFlow.getToken({
           code: code,
-          client_grant_types: clientTestData.grant_types,
-          client_scopes: clientTestData.scopes,
           scopes_requested: ["scopeA"],
-          client_redirect_uris: clientTestData.redirect_uris,
           redirect_uri: undefined,
           token_info: { sub: "12345" },
           code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
@@ -2012,7 +1568,7 @@ describe("authorizationCodeFlow", () => {
       } catch (error) {
         errorExpected = error;
       }
-      expect(errorExpected.error).toBe("server_error");
+      expect(errorExpected.error).toBe("invalid_request");
       expect(errorExpected.more_info).toBe(
         "validateRedirectUri(): redirect_uri must be a valid string containing a valid URI"
       );
@@ -2024,20 +1580,17 @@ describe("authorizationCodeFlow", () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode(undefined, {
+      const code = await getValidCode(copyClientData, {
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
         code_challenge_method: "S256",
       });
-      acFlow = new CopyAuthorizationCodeFlow();
+      acFlow = new CopyAuthorizationCodeFlow(copyClientData);
 
       let errorExpected;
       try {
         await acFlow.getToken({
           code: code,
-          client_grant_types: clientTestData.grant_types,
-          client_scopes: clientTestData.scopes,
           scopes_requested: ["scopeA"],
-          client_redirect_uris: clientTestData.redirect_uris,
           redirect_uri: "http://localhost:3000/notavalidcb",
           token_info: { sub: "12345" },
           code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
@@ -2060,20 +1613,19 @@ describe("authorizationCodeFlow", () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode(undefined, {
+      const code = await getValidCode(copyClientData, {
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
         code_challenge_method: "S256",
       });
       acFlow = new CopyAuthorizationCodeFlow({
-        scope_required: false,
+        ...copyClientData,
+        scopes_required: false,
       });
 
       const token = await acFlow.getToken({
         code: code,
-        client_grant_types: clientTestData.grant_types,
-        client_scopes: clientTestData.scopes,
+
         scopes_requested: [],
-        client_redirect_uris: clientTestData.redirect_uris,
         redirect_uri: "http://localhost:3000/cb",
         token_info: { sub: "12345" },
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
@@ -2092,69 +1644,22 @@ describe("authorizationCodeFlow", () => {
 
     // --------------------------------------------------------------------------------------------
 
-    it("getToken() - with PKCE - specifying wrong algorithm to PKCE", async () => {
-      setValidateCodeFunc();
-      setGenerateTokenFunc();
-
-      const code = await getValidCode(
-        {
-          mapping_challenge_methods: {
-            S256: "sha256",
-          },
-        },
-        {
-          code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
-          code_challenge_method: "S256",
-        }
-      );
-      acFlow = new CopyAuthorizationCodeFlow({
-        scope_required: false,
-      });
-
-      let errorExpected;
-      try {
-        const token = await acFlow.getToken({
-          code: code,
-          client_grant_types: clientTestData.grant_types,
-          client_scopes: clientTestData.scopes,
-          scopes_requested: ["scopeA"],
-          client_redirect_uris: clientTestData.redirect_uris,
-          redirect_uri: "http://localhost:3000/cb",
-          token_info: { sub: "12345" },
-          code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
-          code_challenge_method: "S258",
-          code_verifier:
-            "BB32OXv3qmG6OIe3sTZHjbbP3NW.wltvQ_k73ZHlA42uELwbqX3Xlm4jx_Bv8QQN3sBHMW2c2NSyDYuB0YUFTV2-XjwbfCOK8F_UfbU~72EWJ0dGFOs2.9~giG0TEFXk",
-        });
-      } catch (error) {
-        errorExpected = error;
-      }
-
-      expect(errorExpected.error).toBe("server_error");
-      expect(errorExpected.more_info).toBe(
-        'The algorithm "S258" is not supported by this client or server'
-      );
-    });
-
-    // --------------------------------------------------------------------------------------------
-
     it("getToken() - with PKCE - omitting code challenge method - default S256", async () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode(undefined, {
+      const code = await getValidCode(copyClientData, {
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
       });
       acFlow = new CopyAuthorizationCodeFlow({
-        scope_required: false,
+        ...copyClientData,
+        scopes_required: false,
       });
 
       const token = await acFlow.getToken({
         code: code,
-        client_grant_types: clientTestData.grant_types,
-        client_scopes: clientTestData.scopes,
+
         scopes_requested: [],
-        client_redirect_uris: clientTestData.redirect_uris,
         redirect_uri: "http://localhost:3000/cb",
         token_info: { sub: "12345" },
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
@@ -2177,23 +1682,22 @@ describe("authorizationCodeFlow", () => {
       setGenerateTokenFunc();
 
       const code = await getValidCode(
-        { allow_plain_pkce_method: true },
+        { ...copyClientData, allow_plain_pkce_method: true },
         {
           code_challenge: "testePlain",
           code_challenge_method: "plain",
         }
       );
       acFlow = new CopyAuthorizationCodeFlow({
-        scope_required: false,
+        ...copyClientData,
+        scopes_required: false,
         allow_plain_pkce_method: true,
       });
 
       const token = await acFlow.getToken({
         code: code,
-        client_grant_types: clientTestData.grant_types,
-        client_scopes: clientTestData.scopes,
+
         scopes_requested: [],
-        client_redirect_uris: clientTestData.redirect_uris,
         redirect_uri: "http://localhost:3000/cb",
         token_info: { sub: "12345" },
         code_challenge: "testePlain",
@@ -2211,66 +1715,23 @@ describe("authorizationCodeFlow", () => {
 
     // --------------------------------------------------------------------------------------------
 
-    it("getToken() - with PKCE - testing plain code challenge method passing wrong challenge verifier", async () => {
-      setValidateCodeFunc();
-      setGenerateTokenFunc();
-
-      const code = await getValidCode(
-        { allow_plain_pkce_method: true },
-        {
-          code_challenge: "testePlain",
-          code_challenge_method: "plain",
-        }
-      );
-      acFlow = new CopyAuthorizationCodeFlow({
-        scope_required: false,
-        allow_plain_pkce_method: true,
-      });
-
-      let errorExpected;
-      try {
-        const token = await acFlow.getToken({
-          code: code,
-          client_grant_types: clientTestData.grant_types,
-          client_scopes: clientTestData.scopes,
-          scopes_requested: [],
-          client_redirect_uris: clientTestData.redirect_uris,
-          redirect_uri: "http://localhost:3000/cb",
-          token_info: { sub: "12345" },
-          code_challenge: "testePlain",
-          code_challenge_method: "plain",
-          code_verifier: "testePlainWrong",
-        });
-      } catch (error) {
-        errorExpected = error;
-      }
-
-      expect(errorExpected.error).toBe("server_error");
-      expect(errorExpected.more_info).toBe(
-        "The code verifier is not matching the code challenge!"
-      );
-    });
-
-    // --------------------------------------------------------------------------------------------
-
     it("getToken() - with PKCE - testing s256 code challenge method", async () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
 
-      const code = await getValidCode(undefined, {
+      const code = await getValidCode(copyClientData, {
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
         code_challenge_method: "S256",
       });
       acFlow = new CopyAuthorizationCodeFlow({
-        scope_required: false,
+        ...copyClientData,
+        scopes_required: false,
       });
 
       const token = await acFlow.getToken({
         code: code,
-        client_grant_types: clientTestData.grant_types,
-        client_scopes: clientTestData.scopes,
+
         scopes_requested: [],
-        client_redirect_uris: clientTestData.redirect_uris,
         redirect_uri: "http://localhost:3000/cb",
         token_info: { sub: "12345" },
         code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
@@ -2288,44 +1749,6 @@ describe("authorizationCodeFlow", () => {
 
     // --------------------------------------------------------------------------------------------
 
-    it("getToken() - with PKCE - testing s256 code challenge method with wrong code verifier", async () => {
-      setValidateCodeFunc();
-      setGenerateTokenFunc();
-
-      const code = await getValidCode(undefined, {
-        code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
-        code_challenge_method: "S256",
-      });
-      acFlow = new CopyAuthorizationCodeFlow({
-        scope_required: false,
-      });
-
-      let errorExpected;
-      try {
-        const token = await acFlow.getToken({
-          code: code,
-          client_grant_types: clientTestData.grant_types,
-          client_scopes: clientTestData.scopes,
-          scopes_requested: [],
-          client_redirect_uris: clientTestData.redirect_uris,
-          redirect_uri: "http://localhost:3000/cb",
-          token_info: { sub: "12345" },
-          code_challenge: "UcFg4J3qoHQxPDDayo347Kk9QTFUBOAlvuUYttOJMJU",
-          code_verifier:
-            "BBOXv3qmG6OIe3sTZHjbbP3NW.wltvQ_k73ZHlA42uELwbqX3Xlm4jx_Bv8QQN3sBHMW2c2NSyDYuB0YUFTV2-XjwbfCOK8F_UfbU~72EWJ0dGFOs2.9~giG0TEFXk",
-        });
-      } catch (error) {
-        errorExpected = error;
-      }
-
-      expect(errorExpected.error).toBe("server_error");
-      expect(errorExpected.more_info).toBe(
-        "The code verifier is not matching the code challenge!"
-      );
-    });
-
-    // --------------------------------------------------------------------------------------------
-
     it("getToken() - with PKCE - testing different code challenge method", async () => {
       setValidateCodeFunc();
       setGenerateTokenFunc();
@@ -2335,6 +1758,7 @@ describe("authorizationCodeFlow", () => {
 
       const code = await getValidCode(
         {
+          ...copyClientData,
           mapping_challenge_methods: {
             S512: "sha512",
           },
@@ -2345,7 +1769,8 @@ describe("authorizationCodeFlow", () => {
         }
       );
       acFlow = new CopyAuthorizationCodeFlow({
-        scope_required: false,
+        ...copyClientData,
+        scopes_required: false,
         mapping_challenge_methods: {
           S512: "sha512",
         },
@@ -2353,10 +1778,8 @@ describe("authorizationCodeFlow", () => {
 
       const token = await acFlow.getToken({
         code: code,
-        client_grant_types: clientTestData.grant_types,
-        client_scopes: clientTestData.scopes,
+
         scopes_requested: [],
-        client_redirect_uris: clientTestData.redirect_uris,
         redirect_uri: "http://localhost:3000/cb",
         token_info: { sub: "12345" },
         code_challenge: challege,

@@ -24,20 +24,16 @@ class DeviceCodeFlow extends AuthFlow {
   /**
    * @summary. Returns the a new device_code and user_code
    * @param {Array} requested_scopes - The scopes requested.
-   * @param {Array} client_scopes - The client scopes.
-   * @param {String} verification_uri - The verification uri the user must enter and register the user code.
    * @param {Integer} interval - The ideal interval the device should keep asking for the token.
    * @param {Integer} expires_in - The time that the code expires.
    * @param {String} add_chars - Add chars to the user_code.
    * @param {Boolean} only_numbers - Whether the user_code must be composed only by numbers and added chars.
    * @param {Integer} user_code_size - The size of the user code.
+   * @param {Object} device_code_info - The info that shoulb be passed down to the generateToken
    * @return {Object} device_code - the device_code and user_code information object
    */
   async requestDeviceCode({
     requested_scopes = [],
-    client_scopes = [],
-    client_grant_types = [],
-    verification_uri = "",
     interval = 5,
     expires_in = 1800,
     add_chars = "",
@@ -46,13 +42,8 @@ class DeviceCodeFlow extends AuthFlow {
     device_code_info = {},
   }) {
     try {
-      validateGrant("device_code", client_grant_types);
-      const scopes_granted = this.validateScopes(
-        client_scopes,
-        requested_scopes,
-        this.match_all_scopes,
-        this.scope_required
-      );
+      validateGrant("device_code", this.grant_types);
+      const scopes_granted = this.validateScopes(requested_scopes);
       const user_code = this.generateUserCode({
         only_numbers,
         add_chars,
@@ -62,7 +53,6 @@ class DeviceCodeFlow extends AuthFlow {
         device_code: await this.generateDeviceCode({
           scopes_granted,
           user_code,
-          verification_uri,
           interval,
           expires_in,
           device_code_info,
@@ -119,32 +109,17 @@ class DeviceCodeFlow extends AuthFlow {
   /**
    * @summary. Gets a new token from the server
    * @param {String} device_code - The device code.
-   * @param {Object} client_grant_types - The client grant types.
-   * @param {Object} client_scopes - The client scopes.
-   * @param {Object} scopes_requested - The scopes requested.
    * @param {Object} token_info - The token information to be added to the token.
    * @throws ServerError
    * @returns {Object} - An object with the token generated and the token information provided
    */
-  async getToken({
-    device_code,
-    client_grant_types = [],
-    client_scopes,
-    scopes_requested,
-    token_info,
-  }) {
+  async getToken({ device_code, token_info }) {
     try {
-      validateGrant("device_code", client_grant_types);
+      validateGrant("device_code", this.grant_types);
       const device_code_validation = await this.validateDeviceCode({
         device_code,
         scopes_requested,
       });
-      const scopes_granted = this.validateScopes(
-        client_scopes,
-        scopes_requested,
-        this.match_all_scopes,
-        this.scope_required
-      );
       return await this.generateToken({
         scopes_granted,
         token_info,

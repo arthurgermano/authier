@@ -30,7 +30,7 @@ class AuthFlow {
    * @type {Boolean}
    * @default false
    */
-  scope_required;
+  scopes_required;
 
   /**
    * Client's option whether the state is required
@@ -60,6 +60,34 @@ class AuthFlow {
    */
   match_all_scopes;
 
+  /**
+   * The grant types of this client
+   * @param {Array}
+   * @default []
+   */
+  grant_types;
+
+  /**
+   * The scopes of this client
+   * @param {Array}
+   * @default []
+   */
+  scopes;
+
+  /**
+   * The redirects_uri of this client
+   * @param {Array}
+   * @default []
+   */
+  redirect_uris;
+
+    /**
+   * is_uri_encoded - Whether the redirect_uri is encoded or not
+   * @param {Boolean}
+   * @default false
+   */
+    is_uri_encoded;
+
   // ----------------------------------------------------------------------------------------------
 
   /**
@@ -76,7 +104,7 @@ class AuthFlow {
       options.redirect_uri_required,
       true
     );
-    this.scope_required = returnDefaultValue(options.scope_required, false);
+    this.scopes_required = returnDefaultValue(options.scopes_required, false);
     this.state_required = returnDefaultValue(options.state_required, true);
     this.refresh_token_expires_in = returnDefaultValue(
       options.refresh_token_expires_in,
@@ -84,6 +112,10 @@ class AuthFlow {
     );
     this.token_expires_in = returnDefaultValue(options.token_expires_in, 3600);
     this.match_all_scopes = returnDefaultValue(options.match_all_scopes, true);
+    this.scopes = returnDefaultValue(options.scopes, []);
+    this.redirect_uris = returnDefaultValue(options.redirect_uris, []);
+    this.grant_types = returnDefaultValue(options.grant_types, []);
+    this.is_uri_encoded = returnDefaultValue(options.is_uri_encoded, false);
   }
 
   // ----------------------------------------------------------------------------------------------
@@ -94,22 +126,22 @@ class AuthFlow {
    * @throws ServerError | InvalidRequest
    * @returns {Boolean} - True if the redirect_uri is valid
    */
-  validateRedirectUri(redirect_uri, redirect_uris, uri_encoded = false) {
+  validateRedirectUri(redirect_uri) {
     if (typeof redirect_uri !== "string") {
       throwError(
-        SERVER_ERROR,
+        INVALID_REQUEST,
         "validateRedirectUri(): redirect_uri must be a valid string containing a valid URI"
       );
     }
-    if (!Array.isArray(redirect_uris) || redirect_uris.length == 0) {
+    if (!Array.isArray(this.redirect_uris) || this.redirect_uris.length == 0) {
       throwError(
-        SERVER_ERROR,
-        "validateRedirectUri(): redirect_uris must be an array of strings containing valid URIs"
+        INVALID_REQUEST,
+        "validateRedirectUri(): redirect_uris must be an array of strings containing valid URIs, but the client has no redirect_uris registered"
       );
     }
 
-    for (let uri of redirect_uris) {
-      if (uri_encoded) {
+    for (let uri of this.redirect_uris) {
+      if (this.is_uri_encoded) {
         uri = encodeURIComponent(uri);
       }
       if (uri === redirect_uri) {
@@ -125,62 +157,34 @@ class AuthFlow {
   // ----------------------------------------------------------------------------------------------
 
   /**
-   * @summary. Checks if the state is required and is correct
-   * @param {String} state - The state provided in the request
-   * @param {String} expected_state - The state expected in the request
-   * @throws ServerError | InvalidRequest
-   * @returns {Boolean} - True if the state is valid
-   */
-  validateState(state, expected_state) {
-    if (typeof state !== "string") {
-      throwError(SERVER_ERROR, "validateState(): state must be a valid string");
-    }
-    if (typeof expected_state !== "string") {
-      throwError(
-        SERVER_ERROR,
-        "validateState(): expected_state must be a valid string"
-      );
-    }
-    if (state !== expected_state) {
-      throwError(
-        INVALID_REQUEST,
-        "validateState(): state is different from the expected state"
-      );
-    }
-    return true;
-  }
-
-  // ----------------------------------------------------------------------------------------------
-
-  /**
    * @summary. Validates if the scopes provided are correct only if required or provided
    * @param {Array} scopes - Array os scopes provided in the request.
    * @param {Array} expected_scopes - The scopes array provided in the request.
    * @throws InvalidScope | ServerError
    * @returns {Boolean} - True if the scopes are valid
    */
-  validateScopes(scopes, expected_scopes, match_all = true, required = false) {
+  validateScopes(expected_scopes) {
     if (!Array.isArray(expected_scopes) || expected_scopes.length == 0) {
-      if (required) {
+      if (this.scopes_required) {
         throwError(
           INVALID_SCOPE,
           "validateScopes(): No scopes informed but this client requires scopes to be informed"
         );
       }
-      return scopes;
+      return this.scopes;
     }
-    if (!Array.isArray(scopes) || scopes.length == 0) {
+    if (!Array.isArray(this.scopes) || this.scopes.length == 0) {
       throwError(
         INVALID_SCOPE,
         "validateScopes(): The scopes requested are not valid for this client - this client has no scopes"
       );
     }
-    if (match_all) {
+    if (this.match_all_scopes) {
       // must match all scopes listed
       // if any scope is not granted, throw error
       // otherwise return true
       for (let expected_scope of expected_scopes) {
-        const hasScope = scopes.find((s) => s === expected_scope);
+        const hasScope = this.scopes.find((s) => s === expected_scope);
         if (!hasScope) {
           throwError(
             INVALID_SCOPE,
@@ -190,12 +194,12 @@ class AuthFlow {
       }
       return expected_scopes;
     }
-    
+
     // if any scope is valid and is listed then return true
     // otherwise throw an error
     let valid_scopes = [];
     for (let expected_scope of expected_scopes) {
-      const hasScope = scopes.find((s) => s === expected_scope);
+      const hasScope = this.scopes.find((s) => s === expected_scope);
       if (hasScope) {
         valid_scopes.push(expected_scope);
       }

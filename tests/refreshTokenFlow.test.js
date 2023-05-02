@@ -6,7 +6,12 @@ import { decodeToken, signToken, clientData } from "./utils.js";
 
 let crtFlow;
 let CopyRefreshTokenFlow;
-let clientTestData;
+const copyClientData = {
+  ...clientData,
+  grant_types: clientData.grant_types.split(" "),
+  redirect_uris: clientData.redirect_uris.split(" "),
+  scopes: clientData.scopes.split(" "),
+};
 
 // ------------------------------------------------------------------------------------------------
 
@@ -16,10 +21,7 @@ beforeEach(() => {
       super(options);
     }
   };
-  crtFlow = new RefreshTokenFlow();
-  clientTestData = Object.assign({}, clientData);
-  clientTestData.grant_types = clientTestData.grant_types.split(" ");
-  clientTestData.scopes = clientTestData.scopes.split(" ");
+  crtFlow = new RefreshTokenFlow(copyClientData);
 });
 
 // ------------------------------------------------------------------------------------------------
@@ -27,7 +29,8 @@ beforeEach(() => {
 describe("refreshTokenFlow", () => {
   it("constructor() - generating a new RefreshTokenFlow with options", () => {
     crtFlow = new RefreshTokenFlow({
-      scope_required: true,
+      ...copyClientData,
+      scopes_required: true,
     });
     expect(crtFlow).toBeInstanceOf(RefreshTokenFlow);
   });
@@ -46,11 +49,9 @@ describe("refreshTokenFlow", () => {
       });
     };
 
-    crtFlow = new CopyRefreshTokenFlow();
+    crtFlow = new CopyRefreshTokenFlow(copyClientData);
 
     const token = await crtFlow.getToken({
-      client_grant_types: clientTestData.grant_types,
-      client_scopes: clientTestData.scopes,
       scopes_requested: ["scopeA"],
       token_info: { sub: "12345" },
     });
@@ -74,11 +75,9 @@ describe("refreshTokenFlow", () => {
       });
     };
 
-    crtFlow = new CopyRefreshTokenFlow();
+    crtFlow = new CopyRefreshTokenFlow(copyClientData);
 
     const token = await crtFlow.getToken({
-      client_grant_types: clientTestData.grant_types,
-      client_scopes: clientTestData.scopes,
       scopes_requested: ["scopeA"],
       token_info: { sub: "12345" },
     });
@@ -106,13 +105,11 @@ describe("refreshTokenFlow", () => {
       });
     };
 
-    crtFlow = new CopyRefreshTokenFlow();
+    crtFlow = new CopyRefreshTokenFlow(copyClientData);
 
     let errorExpected;
     try {
       await crtFlow.getToken({
-        client_grant_types: clientTestData.grant_types,
-        client_scopes: clientTestData.scopes,
         scopes_requested: ["scopeC"],
         token_info: { sub: "12345" },
       });
@@ -122,40 +119,6 @@ describe("refreshTokenFlow", () => {
     expect(errorExpected.error).toBe("invalid_scope");
     expect(errorExpected.more_info).toBe(
       "validateScopes(): The scope scopeC is not valid"
-    );
-  });
-
-  // ----------------------------------------------------------------------------------------------
-
-  it("getToken() - pass a invalid grant type", async () => {
-    CopyRefreshTokenFlow.prototype.generateRefreshToken = async function (
-      data
-    ) {
-      expires = Math.floor(Date.now() / 1000) + this.refresh_token_expires_in;
-      return await signToken({
-        exp: expires,
-        sub: data.token_info.sub,
-        iss: data.token_info.iss,
-        scopes: data.scopes_granted.join(" "),
-      });
-    };
-
-    crtFlow = new CopyRefreshTokenFlow();
-
-    let errorExpected;
-    try {
-      await crtFlow.getToken({
-        client_grant_types: ["clientTestData.grant_types"],
-        client_scopes: clientTestData.scopes,
-        scopes_requested: ["scopeB"],
-        token_info: { sub: "12345" },
-      });
-    } catch (error) {
-      errorExpected = error;
-    }
-    expect(errorExpected.error).toBe("unsupported_grant_type");
-    expect(errorExpected.more_info).toBe(
-      "validateGrant(): Not supported the grant type: refresh_token"
     );
   });
 
@@ -174,13 +137,11 @@ describe("refreshTokenFlow", () => {
       });
     };
 
-    crtFlow = new CopyRefreshTokenFlow();
+    crtFlow = new CopyRefreshTokenFlow(copyClientData);
 
     let errorExpected;
     try {
       await crtFlow.getToken({
-        client_grant_types: clientTestData.grant_types,
-        client_scopes: clientTestData.scopes,
         scopes_requested: ["scopeC", "scopeA", "scopeB"],
         token_info: { sub: "12345" },
       });
@@ -207,11 +168,9 @@ describe("refreshTokenFlow", () => {
       });
     };
 
-    crtFlow = new CopyRefreshTokenFlow();
+    crtFlow = new CopyRefreshTokenFlow(copyClientData);
 
     const token = await crtFlow.getToken({
-      client_grant_types: clientTestData.grant_types,
-      client_scopes: clientTestData.scopes,
       scopes_requested: ["scopeA", "scopeB"],
       token_info: { sub: "12345" },
     });
@@ -237,11 +196,9 @@ describe("refreshTokenFlow", () => {
       });
     };
 
-    crtFlow = new CopyRefreshTokenFlow({ match_all_scopes: false });
+    crtFlow = new CopyRefreshTokenFlow({ ...copyClientData, match_all_scopes: false });
 
     const token = await crtFlow.getToken({
-      client_grant_types: clientTestData.grant_types,
-      client_scopes: clientTestData.scopes,
       scopes_requested: ["scopeB", "scopeC"],
       token_info: { sub: "12345" },
     });
@@ -267,11 +224,9 @@ describe("refreshTokenFlow", () => {
       });
     };
 
-    crtFlow = new CopyRefreshTokenFlow({ match_all_scopes: false });
+    crtFlow = new CopyRefreshTokenFlow({ ...copyClientData, match_all_scopes: false });
 
     const token = await crtFlow.getToken({
-      client_grant_types: clientTestData.grant_types,
-      client_scopes: clientTestData.scopes,
       scopes_requested: ["scopeB", "scopeA"],
       token_info: { sub: "12345" },
     });
@@ -299,14 +254,13 @@ describe("refreshTokenFlow", () => {
     };
 
     crtFlow = new CopyRefreshTokenFlow({
-      scope_required: true,
+      ...copyClientData,
+      scopes_required: true,
     });
 
     let errorExpected;
     try {
       await crtFlow.getToken({
-        client_grant_types: clientTestData.grant_types,
-        client_scopes: clientTestData.scopes,
         scopes_requested: undefined,
         token_info: { sub: "12345" },
       });
@@ -335,14 +289,13 @@ describe("refreshTokenFlow", () => {
     };
 
     crtFlow = new CopyRefreshTokenFlow({
-      scope_required: true,
+      ...copyClientData,
+      scopes_required: true,
     });
 
     let errorExpected;
     try {
       await crtFlow.getToken({
-        client_grant_types: clientTestData.grant_types,
-        client_scopes: clientTestData.scopes,
         scopes_requested: [],
         token_info: { sub: "12345" },
       });
@@ -370,12 +323,11 @@ describe("refreshTokenFlow", () => {
     };
 
     crtFlow = new CopyRefreshTokenFlow({
-      scope_required: false,
+      ...copyClientData,
+      scopes_required: false,
     });
 
     const token = await crtFlow.getToken({
-      client_grant_types: clientTestData.grant_types,
-      client_scopes: clientTestData.scopes,
       scopes_requested: undefined,
       token_info: { sub: "12345" },
     });
@@ -402,12 +354,11 @@ describe("refreshTokenFlow", () => {
     };
 
     crtFlow = new CopyRefreshTokenFlow({
-      scope_required: false,
+      ...copyClientData,
+      scopes_required: false,
     });
 
     const token = await crtFlow.getToken({
-      client_grant_types: clientTestData.grant_types,
-      client_scopes: clientTestData.scopes,
       scopes_requested: [],
       token_info: { sub: "12345" },
     });

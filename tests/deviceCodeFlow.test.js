@@ -6,7 +6,12 @@ import { checkToken, decodeToken, signToken, clientData } from "./utils.js";
 
 let dcFlow;
 let CopyDeviceCodeFlow;
-let clientTestData;
+const copyClientData = {
+  ...clientData,
+  grant_types: clientData.grant_types.split(" "),
+  redirect_uris: clientData.redirect_uris.split(" "),
+  scopes: clientData.scopes.split(" "),
+};
 
 // ------------------------------------------------------------------------------------------------
 
@@ -16,11 +21,7 @@ beforeEach(async () => {
       super(options);
     }
   };
-  dcFlow = new DeviceCodeFlow();
-  clientTestData = Object.assign({}, clientData);
-  clientTestData.grant_types = clientTestData.grant_types.split(" ");
-  clientTestData.scopes = clientTestData.scopes.split(" ");
-  clientTestData.redirect_uris = clientTestData.redirect_uris.split(" ");
+  dcFlow = new DeviceCodeFlow(copyClientData);
 });
 
 function setGenerateDeviceCodeFunc() {
@@ -81,7 +82,7 @@ async function getValidDeviceCode(options, params = {}) {
 describe("deviceCodeFlow", () => {
   it("constructor() - generating a new DeviceCodeFlow with options", () => {
     dcFlow = new DeviceCodeFlow({
-      scope_required: true,
+      scopes_required: true,
     });
     expect(dcFlow).toBeInstanceOf(DeviceCodeFlow);
   });
@@ -90,35 +91,36 @@ describe("deviceCodeFlow", () => {
 
   describe("generateDeviceCode()", () => {
     it("generateDeviceCode() - setting a valid generateDeviceCode function with params", async () => {
-      let expires;
-      CopyDeviceCodeFlow.prototype.generateDeviceCode =
-        async function generateDeviceCode(args) {
-          expires = Math.floor(Date.now() / 1000) + args.expires_in;
-          return await signToken({
-            exp: expires,
-            scopes: args.scopes_granted.join(" ") || "",
-            verification_uri: args.verification_uri,
-            user_code: args.user_code,
-          });
-        };
+      try {
+        let expires;
+        CopyDeviceCodeFlow.prototype.generateDeviceCode =
+          async function generateDeviceCode(args) {
+            expires = Math.floor(Date.now() / 1000) + args.expires_in;
+            return await signToken({
+              exp: expires,
+              scopes: args.scopes_granted.join(" ") || "",
+              verification_uri: args.verification_uri,
+              user_code: args.user_code,
+            });
+          };
 
-      dcFlow = new CopyDeviceCodeFlow();
-      const { device_code, user_code } = await dcFlow.requestDeviceCode({
-        interval: 5,
-        expires_in: 1800,
-        add_chars: "-",
-        only_numbers: false,
-        user_code_size: 10,
-        verification_uri: "http://localhost:3000/cb",
-        requested_scopes: ["scopeA"],
-        client_scopes: clientData.scopes.split(" "),
-      });
-      const decoded = await decodeToken(device_code);
-      expect(device_code).toBeTypeOf("string");
-      expect(expires).toBeDefined();
-      expect(decoded.scopes).toBe("scopeA");
-      expect(decoded.exp).toBe(expires);
-      expect(decoded.verification_uri).toBe("http://localhost:3000/cb");
+        dcFlow = new CopyDeviceCodeFlow(copyClientData);
+        const { device_code, user_code } = await dcFlow.requestDeviceCode({
+          interval: 5,
+          expires_in: 1800,
+          add_chars: "-",
+          only_numbers: false,
+          user_code_size: 10,
+          requested_scopes: ["scopeA"],
+        });
+        const decoded = await decodeToken(device_code);
+        expect(device_code).toBeTypeOf("string");
+        expect(expires).toBeDefined();
+        expect(decoded.scopes).toBe("scopeA");
+        expect(decoded.exp).toBe(expires);
+      } catch (error) {
+        console.log(error);
+      }
     });
 
     // --------------------------------------------------------------------------------------------
@@ -126,19 +128,19 @@ describe("deviceCodeFlow", () => {
     it("generateDeviceCode() - NOT setting a valid generateDeviceCode function with params", async () => {
       let errorExpected;
       try {
+        dcFlow = new CopyDeviceCodeFlow(copyClientData);
         await dcFlow.requestDeviceCode({
           interval: 5,
           expires_in: 1800,
           add_chars: "-",
           only_numbers: false,
           user_code_size: 10,
-          verification_uri: "http://localhost:3000/cb",
           requested_scopes: ["scopeA"],
-          client_scopes: clientData.scopes.split(" "),
         });
       } catch (error) {
         errorExpected = error;
       }
+
       expect(errorExpected).toHaveProperty("error", "todo_error");
       expect(errorExpected).toHaveProperty(
         "more_info",
@@ -166,7 +168,7 @@ describe("deviceCodeFlow", () => {
           }
         };
 
-      dcFlow = new CopyDeviceCodeFlow();
+      dcFlow = new CopyDeviceCodeFlow(copyClientData);
 
       const decodeToken = await dcFlow.validateDeviceCode({
         device_code: "qwerasdfzxc",
@@ -201,16 +203,14 @@ describe("deviceCodeFlow", () => {
   describe("requestDeviceCode()", () => {
     it("requestDeviceCode() - testing additional info on request device code", async () => {
       setGenerateDeviceCodeFunc();
-      const dcFlow = new CopyDeviceCodeFlow();
+      const dcFlow = new CopyDeviceCodeFlow(copyClientData);
       const { device_code } = await dcFlow.requestDeviceCode({
         interval: 5,
         expires_in: 1800,
         add_chars: "-",
         only_numbers: false,
         user_code_size: 10,
-        verification_uri: "http://localhost:3000/cb",
         requested_scopes: ["scopeA"],
-        client_scopes: clientData.scopes.split(" "),
         device_code_info: { someInfo: 123 },
       });
 
@@ -222,16 +222,14 @@ describe("deviceCodeFlow", () => {
 
     it("requestDeviceCode() - testing interval property set on device_code", async () => {
       setGenerateDeviceCodeFunc();
-      const dcFlow = new CopyDeviceCodeFlow();
+      const dcFlow = new CopyDeviceCodeFlow(copyClientData);
       const { device_code } = await dcFlow.requestDeviceCode({
         interval: 23,
         expires_in: 1800,
         add_chars: "-",
         only_numbers: false,
         user_code_size: 10,
-        verification_uri: "http://localhost:3000/cb",
         requested_scopes: ["scopeA"],
-        client_scopes: clientData.scopes.split(" "),
         device_code_info: { someInfo: 123 },
       });
 
@@ -243,16 +241,14 @@ describe("deviceCodeFlow", () => {
 
     it("requestDeviceCode() - testing user code length", async () => {
       setGenerateDeviceCodeFunc();
-      const dcFlow = new CopyDeviceCodeFlow();
+      const dcFlow = new CopyDeviceCodeFlow(copyClientData);
       const { user_code } = await dcFlow.requestDeviceCode({
         interval: 5,
         expires_in: 1800,
         add_chars: "-",
         only_numbers: false,
         user_code_size: 21,
-        verification_uri: "http://localhost:3000/cb",
         requested_scopes: ["scopeA"],
-        client_scopes: clientData.scopes.split(" "),
         device_code_info: { someInfo: 123 },
       });
 

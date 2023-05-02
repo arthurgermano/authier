@@ -16,7 +16,7 @@ const clientData = {
     "client_credentials authorization_code device_code refresh_token",
   redirect_uris: "http://localhost:3000/cb http://localhost:3000/cb2 http://localhost:3000/cb3",
   scopes: "scopeA scopeB",
-  scope_required: true,
+  scopes_required: true,
   state_required: true,
   redirect_uri_required: true,
   verification_uris: "http://localhost:3000/cb http://localhost:3000/cb2 http://localhost:3000/cb3",

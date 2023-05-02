@@ -17,9 +17,11 @@ const clientData = {
   redirect_uris:
     "http://localhost:3000/cb http://localhost:3000/cb2 http://localhost:3000/cb3",
   scopes: "scopeA scopeB",
-  scope_required: true,
+  scopes_required: true,
   state_required: true,
   redirect_uri_required: true,
+  match_all_scopes: true,
+  pkce_required: true,
   verification_uris: "http://localhost:3000/cb http://localhost:3000/cb2 http://localhost:3000/cb3",
   issuer: "my company issuer1",
 };

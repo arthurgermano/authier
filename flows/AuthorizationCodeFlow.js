@@ -27,13 +27,6 @@ class AuthorizationCodeFlow extends AuthFlow {
   code_expires_in;
 
   /**
-   * is_uri_encoded - Whether the redirect_uri is encoded or not
-   * @param {Boolean}
-   * @default false
-   */
-  is_uri_encoded;
-
-  /**
    * pkce_required - Whether the pkce is required or not
    * @param {Boolean}
    * @default true
@@ -90,42 +83,30 @@ class AuthorizationCodeFlow extends AuthFlow {
   /**
    * @summary. Returns the a new code
    * @param {String} response_type - The response type.
-   * @param {Array} client_redirect_uris - The client redirect uris.
    * @param {String} redirect_uri - The redirect uri string to redirect the request after resource approval.
    * @param {Array} requested_scopes - The scopes requested.
-   * @param {Array} client_scopes - The client scopes.
-   * @param {String} state - The state string to be added to the redirect uri.
+   * @param {Object} code_challenge - The code challenge using with pkce flow.
+   * @param {Object} code_challenge_method - The code challenge method using with pkce flow.
    * @param {Object} code_info - The code information to be added to the code.
+   * @param {Object} skip_validation_code - Whether should validate or not the code info - want to validate separatedly.
    * @return {Object} code - the code information object
    */
   async getCode({
     response_type,
-    client_redirect_uris = [],
     redirect_uri,
     requested_scopes = [],
-    client_scopes = [],
-    state,
     code_challenge,
     code_challenge_method = "S256",
     code_info,
+    skip_validation_code = false,
   }) {
     try {
-      validateResponse(response_type, "code");
-      const scopes_granted = this.validateScopes(
-        client_scopes,
-        requested_scopes,
-        this.match_all_scopes,
-        this.scope_required
-      );
-      if (this.redirect_uri_required) {
-        this.validateRedirectUri(
-          redirect_uri,
-          client_redirect_uris,
-          this.is_uri_encoded
-        );
+      if (!skip_validation_code) {
+        validateResponse(response_type, "code");
       }
-      if (this.state_required) {
-        this.validateState(state, state);
+      const scopes_granted = this.validateScopes(requested_scopes);
+      if (this.redirect_uri_required) {
+        this.validateRedirectUri(redirect_uri);
       }
       if (this.pkce_required) {
         this.validateCodeChallengeMethod(code_challenge_method);
@@ -135,7 +116,6 @@ class AuthorizationCodeFlow extends AuthFlow {
       return await this.generateCode({
         scopes_granted,
         code_info,
-        state,
         redirect_uri,
         code_challenge,
         code_challenge_method,
@@ -150,54 +130,21 @@ class AuthorizationCodeFlow extends AuthFlow {
   /**
    * @summary. Gets a new token from the server
    * @param {String} code - The authorization code.
-   * @param {Object} client_grant_types - The client grant types.
-   * @param {Object} client_scopes - The client scopes.
    * @param {Object} scopes_requested - The scopes requested.
-   * @param {Object} client_redirect_uris - The client redirect uris.
    * @param {String} redirect_uri - The redirect uri string to redirect the request after resource approval.
    * @param {Object} token_info - The token information to be added to the token.
    * @throws ServerError
    * @returns {Object} - An object with the token generated and the token information provided
    */
-  async getToken({
-    code,
-    client_grant_types = [],
-    client_scopes,
-    scopes_requested,
-    client_redirect_uris = [],
-    redirect_uri,
-    token_info,
-    code_verifier,
-    code_challenge,
-    code_challenge_method = "S256",
-  }) {
+  async getToken({ code, scopes_requested, redirect_uri, token_info }) {
     try {
-      validateGrant("authorization_code", client_grant_types);
+      validateGrant("authorization_code", this.grant_types);
       const code_validation = await this.validateCode({
         code,
         scopes_requested,
       });
-      const scopes_granted = this.validateScopes(
-        client_scopes,
-        scopes_requested,
-        this.match_all_scopes,
-        this.scope_required
-      );
-      this.validateRedirectUri(
-        redirect_uri,
-        client_redirect_uris,
-        this.is_uri_encoded
-      );
-      if (this.pkce_required) {
-        if (code_validation.code_challenge_method) {
-          code_challenge_method = code_validation.code_challenge_method;
-        }
-        this.validateCodeVerifier(
-          code_verifier,
-          code_challenge,
-          code_challenge_method
-        );
-      }
+      const scopes_granted = this.validateScopes(scopes_requested);
+      this.validateRedirectUri(redirect_uri);
       return await this.generateToken({
         scopes_granted,
         token_info,

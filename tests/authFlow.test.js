@@ -1,16 +1,23 @@
 import { describe, it, beforeEach } from "vitest";
 import AuthFlow from "../flows/AuthFlow.js";
+import { clientData } from "./utils.js";
 
 // ------------------------------------------------------------------------------------------------
 
 let authFlow;
 let CopyAuthFlow;
+const copyClientData = {
+  ...clientData,
+  grant_types: clientData.grant_types.split(" "),
+  redirect_uris: clientData.redirect_uris.split(" "),
+  scopes: clientData.scopes.split(" "),
+};
 
 // ------------------------------------------------------------------------------------------------
 
 beforeEach(() => {
   CopyAuthFlow = class extends AuthFlow {};
-  authFlow = new AuthFlow();
+  authFlow = new AuthFlow(copyClientData);
 });
 
 // ------------------------------------------------------------------------------------------------
@@ -18,11 +25,9 @@ beforeEach(() => {
 describe("authFlow", () => {
   describe("validateRedirectUri()", () => {
     it("validateRedirectUri() - validating a valid and supported redirect_uri", () => {
-      expect(
-        authFlow.validateRedirectUri("http://localhost:3000/callback", [
-          "http://localhost:3000/callback",
-        ])
-      ).toBe(true);
+      expect(authFlow.validateRedirectUri("http://localhost:3000/cb")).toBe(
+        true
+      );
     });
 
     // --------------------------------------------------------------------------------------------
@@ -30,13 +35,10 @@ describe("authFlow", () => {
     it("validateRedirectUri() - validating a invalid redirect_uri", () => {
       let errorExpected;
       try {
-        authFlow.validateRedirectUri("http://localhost:3000/callback", [
-          "http://localhost:3000/callback2",
-        ]);
+        authFlow.validateRedirectUri("http://localhost:3000/callback");
       } catch (error) {
         errorExpected = error;
       }
-
       expect(errorExpected).toHaveProperty("error", "invalid_request");
       expect(errorExpected).toHaveProperty(
         "more_info",
@@ -49,14 +51,12 @@ describe("authFlow", () => {
     it("validateRedirectUri() - validating a invalid param redirect_uri", () => {
       let errorExpected;
       try {
-        authFlow.validateRedirectUri(undefined, [
-          "http://localhost:3000/callback",
-        ]);
+        authFlow.validateRedirectUri(undefined);
       } catch (error) {
         errorExpected = error;
       }
 
-      expect(errorExpected).toHaveProperty("error", "server_error");
+      expect(errorExpected).toHaveProperty("error", "invalid_request");
       expect(errorExpected).toHaveProperty(
         "more_info",
         "validateRedirectUri(): redirect_uri must be a valid string containing a valid URI"
@@ -65,33 +65,10 @@ describe("authFlow", () => {
 
     // --------------------------------------------------------------------------------------------
 
-    it("validateRedirectUri() - validating a invalid param redirect_uris", () => {
-      let errorExpected;
-      try {
-        authFlow.validateRedirectUri(
-          "http://localhost:3000/callback",
-          undefined
-        );
-      } catch (error) {
-        errorExpected = error;
-      }
-
-      expect(errorExpected).toHaveProperty("error", "server_error");
-      expect(errorExpected).toHaveProperty(
-        "more_info",
-        "validateRedirectUri(): redirect_uris must be an array of strings containing valid URIs"
-      );
-    });
-
-    // --------------------------------------------------------------------------------------------
-
     it("validateRedirectUri() - validating a valid url with encoding", () => {
+      authFlow = new AuthFlow({ ...copyClientData, is_uri_encoded: true });
       expect(
-        authFlow.validateRedirectUri(
-          "http%3A%2F%2Flocalhost%3A3000%2Fcallback%2Fteste%3Fid%3D1%26name%3DServer",
-          ["http://localhost:3000/callback/teste?id=1&name=Server"],
-          true
-        )
+        authFlow.validateRedirectUri("http%3A%2F%2Flocalhost%3A3000%2Fcb")
       ).toBe(true);
     });
 
@@ -99,16 +76,12 @@ describe("authFlow", () => {
 
     it("validateRedirectUri() - validating a invalid url with encoding", () => {
       let errorExpected;
+      authFlow = new AuthFlow({ ...copyClientData, is_uri_encoded: true });
       try {
-        authFlow.validateRedirectUri(
-          "http://localhost:3000/callback/teste?id=1&name=Server",
-          ["http://localhost:3000/callback/teste?id=1&name=Server"],
-          true
-        );
+        authFlow.validateRedirectUri("http://localhost:3000/cb");
       } catch (error) {
         errorExpected = error;
       }
-
       expect(errorExpected).toHaveProperty("error", "invalid_request");
       expect(errorExpected).toHaveProperty(
         "more_info",
@@ -119,70 +92,9 @@ describe("authFlow", () => {
 
   // ----------------------------------------------------------------------------------------------
 
-  describe("validateState()", () => {
-    it("validateState() - validating a valid state", () => {
-      expect(authFlow.validateState("qwerasdfzxc", "qwerasdfzxc")).toBe(true);
-    });
-
-    // --------------------------------------------------------------------------------------------
-
-    it("validateState() - validating a invalid state", () => {
-      let errorExpected;
-      try {
-        authFlow.validateState("qwerasdfzxc", "qwerasdfzxc2");
-      } catch (error) {
-        errorExpected = error;
-      }
-
-      expect(errorExpected).toHaveProperty("error", "invalid_request");
-      expect(errorExpected).toHaveProperty(
-        "more_info",
-        "validateState(): state is different from the expected state"
-      );
-    });
-
-    // --------------------------------------------------------------------------------------------
-
-    it("validateState() - validating a invalid param state", () => {
-      let errorExpected;
-      try {
-        authFlow.validateState(undefined, "qwerasdfzxc");
-      } catch (error) {
-        errorExpected = error;
-      }
-
-      expect(errorExpected).toHaveProperty("error", "server_error");
-      expect(errorExpected).toHaveProperty(
-        "more_info",
-        "validateState(): state must be a valid string"
-      );
-    });
-
-    // --------------------------------------------------------------------------------------------
-
-    it("validateState() - validating a invalid param expected state", () => {
-      let errorExpected;
-      try {
-        authFlow.validateState("qwerasdfzxc", undefined);
-      } catch (error) {
-        errorExpected = error;
-      }
-
-      expect(errorExpected).toHaveProperty("error", "server_error");
-      expect(errorExpected).toHaveProperty(
-        "more_info",
-        "validateState(): expected_state must be a valid string"
-      );
-    });
-  });
-
-  // ----------------------------------------------------------------------------------------------
-
   describe("validateScopes()", () => {
     it("validateScopes() - validating a valid scope", () => {
-      expect(
-        authFlow.validateScopes(["scopeA"], ["scopeA", "scopeB"], false)
-      ).toEqual(["scopeA"]);
+      expect(authFlow.validateScopes(["scopeA"])).toEqual(["scopeA"]);
     });
 
     // --------------------------------------------------------------------------------------------
@@ -190,7 +102,7 @@ describe("authFlow", () => {
     it("validateScopes() - validating a invalid scope", () => {
       let errorExpected;
       try {
-        authFlow.validateScopes(["scopeA"], ["scopeB"]);
+        authFlow.validateScopes(["scopeX"]);
       } catch (error) {
         errorExpected = error;
       }
@@ -198,7 +110,7 @@ describe("authFlow", () => {
       expect(errorExpected).toHaveProperty("error", "invalid_scope");
       expect(errorExpected).toHaveProperty(
         "more_info",
-        "validateScopes(): The scope scopeB is not valid"
+        "validateScopes(): The scope scopeX is not valid"
       );
     });
 
@@ -207,7 +119,8 @@ describe("authFlow", () => {
     it("validateScopes() - validating a invalid param scope - required scope", () => {
       let errorExpected;
       try {
-        authFlow.validateScopes(undefined, ["scopeA", "scopeB"], true, true);
+        authFlow = new AuthFlow({ ...copyClientData, scopes: [] });
+        authFlow.validateScopes(["scopeA", "scopeB"]);
       } catch (error) {
         errorExpected = error;
       }
@@ -224,7 +137,7 @@ describe("authFlow", () => {
     it("validateScopes() - validating a invalid param expected scope", () => {
       let errorExpected;
       try {
-        authFlow.validateScopes(["scopeA"], undefined, true, true);
+        authFlow.validateScopes();
       } catch (error) {
         errorExpected = error;
       }
@@ -239,14 +152,8 @@ describe("authFlow", () => {
     // --------------------------------------------------------------------------------------------
 
     it("validateScopes() - validating a valid scopes among several scopes", () => {
-      expect(
-        authFlow.validateScopes(
-          ["scopeC", "scopeB"],
-          ["scopeD", "scopeB"],
-          false,
-          true
-        )
-      ).toEqual(["scopeB"]);
+      authFlow = new AuthFlow({ ...copyClientData, match_all_scopes: false });
+      expect(authFlow.validateScopes(["scopeC", "scopeB"])).toEqual(["scopeB"]);
     });
 
     // --------------------------------------------------------------------------------------------
@@ -254,7 +161,8 @@ describe("authFlow", () => {
     it("validateScopes() - validating a invalid scopes among several scopes", () => {
       let errorExpected;
       try {
-        authFlow.validateScopes(["scopeC", "scopeB"], ["scopeD", "scopeA"]);
+        authFlow = new AuthFlow({ ...copyClientData });
+        authFlow.validateScopes(["scopeX", "scopeY"]);
       } catch (error) {
         errorExpected = error;
       }
@@ -262,20 +170,17 @@ describe("authFlow", () => {
       expect(errorExpected).toHaveProperty("error", "invalid_scope");
       expect(errorExpected).toHaveProperty(
         "more_info",
-        "validateScopes(): The scope scopeD is not valid"
+        "validateScopes(): The scope scopeX is not valid"
       );
     });
 
     // --------------------------------------------------------------------------------------------
 
     it("validateScopes() - validating valid scopes with match all scopes enabled", () => {
-      expect(
-        authFlow.validateScopes(
-          ["scopeC", "scopeB"],
-          ["scopeB", "scopeC"],
-          true
-        )
-      ).toEqual(["scopeB", "scopeC"]);
+      expect(authFlow.validateScopes(["scopeA", "scopeB"])).toEqual([
+        "scopeA",
+        "scopeB",
+      ]);
     });
 
     // --------------------------------------------------------------------------------------------
@@ -283,11 +188,7 @@ describe("authFlow", () => {
     it("validateScopes() - validating invalid scopes with match all scopes enabled", () => {
       let errorExpected;
       try {
-        authFlow.validateScopes(
-          ["scopeC", "scopeB"],
-          ["scopeC", "scopeE", "scopeA", "scopeD"],
-          true
-        );
+        authFlow.validateScopes(["scopeX", "scopeY"]);
       } catch (error) {
         errorExpected = error;
       }
@@ -295,7 +196,7 @@ describe("authFlow", () => {
       expect(errorExpected).toHaveProperty("error", "invalid_scope");
       expect(errorExpected).toHaveProperty(
         "more_info",
-        "validateScopes(): The scope scopeE is not valid"
+        "validateScopes(): The scope scopeX is not valid"
       );
     });
   });

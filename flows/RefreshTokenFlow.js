@@ -1,7 +1,6 @@
 const { validateGrant } = require("../grant_types/index.js");
 const { TODO_ERROR, throwError } = require("../errors/index.js");
 const AuthFlow = require("./AuthFlow.js");
-const { returnDefaultValue } = require("../common");
 
 // ------------------------------------------------------------------------------------------------
 
@@ -19,27 +18,15 @@ class RefreshTokenFlow extends AuthFlow {
 
   /**
    * @summary. Gets the refresh token info from the server
-   * @param {Array} client_grant_types - The client grant types.
-   * @param {Array} client_scopes - The client scopes.
    * @param {Array} scopes_requested - The scopes requested.
    * @param {Object} token_info - The token information to be added to the token.
    * @throws ServerError
    * @returns {Object} - An object with the refresh token generated and the token information provided
    */
-  async getToken({
-    client_grant_types = [],
-    client_scopes,
-    scopes_requested,
-    token_info,
-  }) {
+  async getToken({ scopes_requested, token_info }) {
     try {
-      validateGrant("refresh_token", client_grant_types);
-      const scopes_granted = this.validateScopes(
-        client_scopes,
-        scopes_requested,
-        this.match_all_scopes,
-        this.scope_required
-      );
+      validateGrant("refresh_token", this.grant_types);
+      const scopes_granted = this.validateScopes(scopes_requested);
       return await this.generateRefreshToken({ scopes_granted, token_info });
     } catch (error) {
       throw error;
