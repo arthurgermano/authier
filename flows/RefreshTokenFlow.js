@@ -27,7 +27,10 @@ class RefreshTokenFlow extends AuthFlow {
   async getToken({ scopes_requested, token_info, refresh_token }) {
     try {
       validateGrant("refresh_token", this.grant_types);
-      const scopes_granted = this.validateScopes(scopes_requested);
+      let scopes_granted;
+      if (scopes_requested) {
+        scopes_granted = this.validateScopes(scopes_requested);
+      }
       const refresh_token_validation = await this.validateRefreshToken({
         refresh_token,
         token_info,
