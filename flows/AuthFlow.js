@@ -12,6 +12,24 @@ const { returnDefaultValue } = require("../common");
 
 class AuthFlow {
   /**
+   * Identification string.
+   * @type {String}
+   */
+  id;
+
+  /**
+   * Client's identification string.
+   * @type {String}
+   */
+  client_id;
+
+  /**
+   * Client's secret string.
+   * @type {String}
+   */
+  client_secret;
+
+  /**
    * Client option to issue or not a refresh client token - default is true
    * @type {Boolean}
    * @default true
@@ -81,12 +99,12 @@ class AuthFlow {
    */
   redirect_uris;
 
-    /**
+  /**
    * is_uri_encoded - Whether the redirect_uri is encoded or not
    * @param {Boolean}
    * @default false
    */
-    is_uri_encoded;
+  is_uri_encoded;
 
   // ----------------------------------------------------------------------------------------------
 
@@ -96,6 +114,10 @@ class AuthFlow {
    * @constructor
    */
   constructor(options = {}) {
+    this.id = returnDefaultValue(options.id, 0);
+    this.client_id = returnDefaultValue(options.client_id, false);
+    this.client_secret = returnDefaultValue(options.client_secret, false);
+
     this.issues_refresh_token = returnDefaultValue(
       options.issues_refresh_token,
       true

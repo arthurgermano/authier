@@ -1,6 +1,6 @@
 {
   "name": "authier",
-  "version": "5.0.7",
+  "version": "5.0.8",
   "author": "Arthur José Germano",
   "license": "MIT",
   "main": "src/index.js",
