@@ -1,6 +1,9 @@
 /auth_server_example/
+/auth_server_example
+auth_server_example
 /db/
 /keys/
 /tests/
 CHANGELOG.md
 README_v1.md
+README_v2.md
