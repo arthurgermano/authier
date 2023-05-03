@@ -98,12 +98,9 @@ class AuthorizationCodeFlow extends AuthFlow {
     code_challenge,
     code_challenge_method = "S256",
     code_info,
-    skip_validation_code = false,
   }) {
     try {
-      if (!skip_validation_code) {
-        validateResponse(response_type, "code");
-      }
+      validateResponse(response_type, "code");
       const scopes_granted = this.validateScopes(requested_scopes);
       if (this.redirect_uri_required) {
         this.validateRedirectUri(redirect_uri);
@@ -136,10 +133,11 @@ class AuthorizationCodeFlow extends AuthFlow {
    * @throws ServerError
    * @returns {Object} - An object with the token generated and the token information provided
    */
-  async getToken({ code, scopes_requested, redirect_uri, token_info }) {
+  async getToken({ code, scopes_requested, redirect_uri, token_info, code_verifier }) {
     try {
       validateGrant("authorization_code", this.grant_types);
       const code_validation = await this.validateCode({
+        code_verifier,
         code,
         scopes_requested,
       });
