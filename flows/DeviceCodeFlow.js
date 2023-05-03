@@ -1,6 +1,7 @@
 const { validateGrant } = require("../grant_types/index.js");
 const { TODO_ERROR, throwError } = require("../errors/index.js");
 const AuthFlow = require("./AuthFlow.js");
+const { returnDefaultValue } = require("../common");
 
 // ------------------------------------------------------------------------------------------------
 
@@ -14,9 +15,19 @@ class DeviceCodeFlow extends AuthFlow {
    * @summary. Creates a Device Flow
    *
    * @constructor
+   *
+   * /**
+   * Device Code TTL - Default is 1800 seconds.
+   * @type {Number}
+   * @default 1800
+   * device_code_expires_in;
    */
   constructor(options = {}) {
     super(options);
+    this.device_code_expires_in = returnDefaultValue(
+      options.device_code_expires_in,
+      1800
+    );
   }
 
   // ----------------------------------------------------------------------------------------------
@@ -35,7 +46,6 @@ class DeviceCodeFlow extends AuthFlow {
   async requestDeviceCode({
     requested_scopes = [],
     interval = 5,
-    expires_in = 1800,
     add_chars = "",
     only_numbers = false,
     user_code_size = 10,
@@ -54,7 +64,6 @@ class DeviceCodeFlow extends AuthFlow {
           scopes_granted,
           user_code,
           interval,
-          expires_in,
           device_code_info,
         }),
         user_code,

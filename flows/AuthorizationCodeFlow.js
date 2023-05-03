@@ -88,7 +88,6 @@ class AuthorizationCodeFlow extends AuthFlow {
    * @param {Object} code_challenge - The code challenge using with pkce flow.
    * @param {Object} code_challenge_method - The code challenge method using with pkce flow.
    * @param {Object} code_info - The code information to be added to the code.
-   * @param {Object} skip_validation_code - Whether should validate or not the code info - want to validate separatedly.
    * @return {Object} code - the code information object
    */
   async getCode({
@@ -127,24 +126,21 @@ class AuthorizationCodeFlow extends AuthFlow {
   /**
    * @summary. Gets a new token from the server
    * @param {String} code - The authorization code.
-   * @param {Object} scopes_requested - The scopes requested.
    * @param {String} redirect_uri - The redirect uri string to redirect the request after resource approval.
    * @param {Object} token_info - The token information to be added to the token.
+   * @param {String} code_verifier - The authorization code verifier with PKCE flow.
    * @throws ServerError
    * @returns {Object} - An object with the token generated and the token information provided
    */
-  async getToken({ code, scopes_requested, redirect_uri, token_info, code_verifier }) {
+  async getToken({ code, redirect_uri, token_info, code_verifier }) {
     try {
       validateGrant("authorization_code", this.grant_types);
+      this.validateRedirectUri(redirect_uri);
       const code_validation = await this.validateCode({
         code_verifier,
         code,
-        scopes_requested,
       });
-      const scopes_granted = this.validateScopes(scopes_requested);
-      this.validateRedirectUri(redirect_uri);
       return await this.generateToken({
-        scopes_granted,
         token_info,
         redirect_uri,
         code_validation,
@@ -266,13 +262,12 @@ class AuthorizationCodeFlow extends AuthFlow {
 
   /**
    * @summary. Basically generates a string code and returns it
-   * - Can be implemented to do more things as save generated codes in the database etc...
-   * @param {Object} scopes_requested - The client grant types.
-   * @param {Object} code_info - The code information to be added to the code.
+   * - Can be implemented to do more things as save generated codes in the database etc..
+   * @param {Object} args 
    * @throws ServerError
    * @return {String} code - the code giving access to resources
    */
-  async generateCode({ scopes_requested, state, code_info }) {
+  async generateCode({ ...args }) {
     // Must generate a code
     // Must return the code as string as a promise
     throwError(TODO_ERROR, "generateCode(): not implemented yet!");
@@ -284,11 +279,11 @@ class AuthorizationCodeFlow extends AuthFlow {
    * @summary. Validates a provided code
    * - Can be implemented to do more things as save codes in the database etc...
    * @param {String} code - The code string to be validated.
-   * @param {Object} scopes_requested - The scopes requested.
+   * @param {String} code_verifier - The authorization code verifier with PKCE flow.
    * @throws Errors - Depending of the flow
    * @return {Object} validation of the code information - the code giving access to request a token
    */
-  async validateCode({ code, scopes_requested }) {
+  async validateCode({ code, code_verifier }) {
     // Must validate the code
     // check its scopes, signature, etc
     // Must return the validation info or throw an exception

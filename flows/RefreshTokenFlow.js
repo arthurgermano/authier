@@ -20,14 +20,24 @@ class RefreshTokenFlow extends AuthFlow {
    * @summary. Gets the refresh token info from the server
    * @param {Array} scopes_requested - The scopes requested.
    * @param {Object} token_info - The token information to be added to the token.
+   * @param {String} refresh_token - The refresh token if exists
    * @throws ServerError
    * @returns {Object} - An object with the refresh token generated and the token information provided
    */
-  async getToken({ scopes_requested, token_info }) {
+  async getToken({ scopes_requested, token_info, refresh_token }) {
     try {
       validateGrant("refresh_token", this.grant_types);
       const scopes_granted = this.validateScopes(scopes_requested);
-      return await this.generateRefreshToken({ scopes_granted, token_info });
+      const refresh_token_validation = await this.validateRefreshToken({
+        refresh_token,
+        token_info,
+        scopes_granted,
+      });
+      return await this.generateRefreshToken({
+        scopes_granted,
+        token_info,
+        refresh_token_validation,
+      });
     } catch (error) {
       throw error;
     }
@@ -53,11 +63,11 @@ class RefreshTokenFlow extends AuthFlow {
 
   /**
    * @summary. Validates the refresh token provided
-   * @param {String} refresh_token - The refresh_token string to be validated.
+   * @param {Object} args
    * @throws AccessDenied | InvalidRequest
    * @return {Object} refresh_token_validation - the properties set inside the token must be returned
    */
-  async validateRefreshToken({ refresh_token }) {
+  async validateRefreshToken({ args }) {
     // Must validate the refresh_token
     // check it's signature, etc
     // Must return the validation info or throw an exception
