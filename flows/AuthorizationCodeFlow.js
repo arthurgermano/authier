@@ -187,7 +187,7 @@ class AuthorizationCodeFlow extends AuthFlow {
       typeof code_challenge != "string"
     ) {
       throwError(
-        SERVER_ERROR,
+        INVALID_REQUEST,
         `The code challenge "${this.code_challenge}" is not correct or is missing!`
       );
     }
@@ -208,7 +208,7 @@ class AuthorizationCodeFlow extends AuthFlow {
       typeof code_verifier != "string"
     ) {
       throwError(
-        SERVER_ERROR,
+        INVALID_REQUEST,
         `The code verifier "${this.code_verifier}" is not correct or is missing!`
       );
     }
@@ -219,7 +219,7 @@ class AuthorizationCodeFlow extends AuthFlow {
 
     if (decoded_verifier !== code_challenge) {
       throwError(
-        SERVER_ERROR,
+        INVALID_REQUEST,
         `The code verifier is not matching the code challenge!`
       );
     }
