@@ -24,6 +24,7 @@ const clientData = {
   pkce_required: true,
   verification_uris: "http://localhost:3000/cb http://localhost:3000/cb2 http://localhost:3000/cb3",
   issuer: "my company issuer1",
+  device_code_expires_in: 1800
 };
 
 const passwordData = {

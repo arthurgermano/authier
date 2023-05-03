@@ -91,36 +91,31 @@ describe("deviceCodeFlow", () => {
 
   describe("generateDeviceCode()", () => {
     it("generateDeviceCode() - setting a valid generateDeviceCode function with params", async () => {
-      try {
-        let expires;
-        CopyDeviceCodeFlow.prototype.generateDeviceCode =
-          async function generateDeviceCode(args) {
-            expires = Math.floor(Date.now() / 1000) + args.expires_in;
-            return await signToken({
-              exp: expires,
-              scopes: args.scopes_granted.join(" ") || "",
-              verification_uri: args.verification_uri,
-              user_code: args.user_code,
-            });
-          };
+      let expires;
+      CopyDeviceCodeFlow.prototype.generateDeviceCode =
+        async function generateDeviceCode(args) {
+          expires = Math.floor(Date.now() / 1000) + this.device_code_expires_in;
+          return await signToken({
+            exp: expires,
+            scopes: args.scopes_granted.join(" ") || "",
+            verification_uri: args.verification_uri,
+            user_code: args.user_code,
+          });
+        };
 
-        dcFlow = new CopyDeviceCodeFlow(copyClientData);
-        const { device_code, user_code } = await dcFlow.requestDeviceCode({
-          interval: 5,
-          expires_in: 1800,
-          add_chars: "-",
-          only_numbers: false,
-          user_code_size: 10,
-          requested_scopes: ["scopeA"],
-        });
-        const decoded = await decodeToken(device_code);
-        expect(device_code).toBeTypeOf("string");
-        expect(expires).toBeDefined();
-        expect(decoded.scopes).toBe("scopeA");
-        expect(decoded.exp).toBe(expires);
-      } catch (error) {
-        console.log(error);
-      }
+      dcFlow = new CopyDeviceCodeFlow(copyClientData);
+      const { device_code, user_code } = await dcFlow.requestDeviceCode({
+        interval: 5,
+        add_chars: "-",
+        only_numbers: false,
+        user_code_size: 10,
+        requested_scopes: ["scopeA"],
+      });
+      const decoded = await decodeToken(device_code);
+      expect(device_code).toBeTypeOf("string");
+      expect(expires).toBeDefined();
+      expect(decoded.scopes).toBe("scopeA");
+      expect(decoded.exp).toBe(expires);
     });
 
     // --------------------------------------------------------------------------------------------
