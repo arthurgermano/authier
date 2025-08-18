@@ -1,319 +1,486 @@
-import { describe, it, beforeEach } from "vitest";
-import AuthFlow from "../flows/AuthFlow.js";
+import { describe, it, beforeEach, expect } from "vitest";
+import { OAuthError, ERROR_SPECS } from "../src/errors/index.js";
 import { clientData } from "./utils.js";
+import AuthFlow from "../src/flows/AuthFlow.js";
 
-// ------------------------------------------------------------------------------------------------
+// ==================================================================================================================================================
 
-let authFlow;
-let CopyAuthFlow;
-const copyClientData = {
-  ...clientData,
-  grant_types: clientData.grant_types.split(" "),
-  redirect_uris: clientData.redirect_uris.split(" "),
-  scopes: clientData.scopes.split(" "),
-};
+describe("AuthFlow - Classe Base", () => {
+  let authFlow;
 
-// ------------------------------------------------------------------------------------------------
-
-beforeEach(() => {
-  CopyAuthFlow = class extends AuthFlow {};
-  authFlow = new AuthFlow(copyClientData);
-});
-
-// ------------------------------------------------------------------------------------------------
-
-describe("authFlow", () => {
-  describe("validateRedirectUri()", () => {
-    it("validateRedirectUri() - validating a valid and supported redirect_uri", () => {
-      expect(authFlow.validateRedirectUri("http://localhost:3000/cb")).toBe(
-        true
-      );
-    });
-
-    // --------------------------------------------------------------------------------------------
-
-    it("validateRedirectUri() - validating a invalid redirect_uri", () => {
-      let errorExpected;
-      try {
-        authFlow.validateRedirectUri("http://localhost:3000/callback");
-      } catch (error) {
-        errorExpected = error;
-      }
-      expect(errorExpected).toHaveProperty("error", "invalid_request");
-      expect(errorExpected).toHaveProperty(
-        "more_info",
-        "validateRedirectUri(): redirect_uri is not valid for the client"
-      );
-    });
-
-    // --------------------------------------------------------------------------------------------
-
-    it("validateRedirectUri() - validating a invalid param redirect_uri", () => {
-      let errorExpected;
-      try {
-        authFlow.validateRedirectUri(undefined);
-      } catch (error) {
-        errorExpected = error;
-      }
-
-      expect(errorExpected).toHaveProperty("error", "invalid_request");
-      expect(errorExpected).toHaveProperty(
-        "more_info",
-        "validateRedirectUri(): redirect_uri must be a valid string containing a valid URI"
-      );
-    });
-
-    // --------------------------------------------------------------------------------------------
-
-    it("validateRedirectUri() - validating a valid url with encoding", () => {
-      authFlow = new AuthFlow({ ...copyClientData, is_uri_encoded: true });
-      expect(
-        authFlow.validateRedirectUri("http%3A%2F%2Flocalhost%3A3000%2Fcb")
-      ).toBe(true);
-    });
-
-    // --------------------------------------------------------------------------------------------
-
-    it("validateRedirectUri() - validating a invalid url with encoding", () => {
-      let errorExpected;
-      authFlow = new AuthFlow({ ...copyClientData, is_uri_encoded: true });
-      try {
-        authFlow.validateRedirectUri("http://localhost:3000/cb");
-      } catch (error) {
-        errorExpected = error;
-      }
-      expect(errorExpected).toHaveProperty("error", "invalid_request");
-      expect(errorExpected).toHaveProperty(
-        "more_info",
-        "validateRedirectUri(): redirect_uri is not valid for the client"
-      );
-    });
+  // beforeEach é executado antes de cada teste `it()`
+  beforeEach(() => {
+    authFlow = new AuthFlow({ ...clientData });
   });
 
-  // ----------------------------------------------------------------------------------------------
+  // ================================================================================================================================================
 
-  describe("validateScopes()", () => {
-    it("validateScopes() - validating a valid scope", () => {
-      expect(authFlow.validateScopes(["scopeA"])).toEqual(["scopeA"]);
-    });
-
-    // --------------------------------------------------------------------------------------------
-
-    it("validateScopes() - validating a invalid scope", () => {
-      let errorExpected;
-      try {
-        authFlow.validateScopes(["scopeX"]);
-      } catch (error) {
-        errorExpected = error;
-      }
-
-      expect(errorExpected).toHaveProperty("error", "invalid_scope");
-      expect(errorExpected).toHaveProperty(
-        "more_info",
-        "validateScopes(): The scope scopeX is not valid"
+  describe("Constructor", () => {
+    it("deve lançar um erro se 'client_id' não for fornecido", () => {
+      // Um cliente DEVE ter um client_id, então a instanciação deve falhar.
+      expect(() => new AuthFlow({})).toThrow(
+        "AuthFlowError: Não é possível instanciar um fluxo sem um 'client_id'."
       );
     });
 
-    // --------------------------------------------------------------------------------------------
+    it("deve atribuir valores padrão para opções não fornecidas", () => {
+      const flow = new AuthFlow({ client_id: "test-client" });
 
-    it("validateScopes() - validating a invalid param scope - required scope", () => {
-      let errorExpected;
-      try {
-        authFlow = new AuthFlow({ ...copyClientData, scopes: [] });
-        authFlow.validateScopes(["scopeA", "scopeB"]);
-      } catch (error) {
-        errorExpected = error;
-      }
+      // Verifica se o client_id foi atribuído
+      expect(flow.client_id).toBe("test-client");
 
-      expect(errorExpected).toHaveProperty("error", "invalid_scope");
-      expect(errorExpected).toHaveProperty(
-        "more_info",
-        "validateScopes(): The scopes requested are not valid for this client - this client has no scopes"
-      );
+      // Verifica os valores padrão para outras propriedades
+      expect(flow.id).toBeNull();
+      expect(flow.client_secret).toBeNull();
+      expect(flow.issues_refresh_token).toBe(true);
+      expect(flow.redirect_uri_required).toBe(true);
+      expect(flow.scopes_required).toBe(false);
+      expect(flow.state_required).toBe(true);
+      expect(flow.match_all_scopes).toBe(true);
+      expect(flow.refresh_token_expires_in).toBe(7200);
+      expect(flow.token_expires_in).toBe(3600);
+
+      // Verifica se as propriedades baseadas em string são arrays vazios por padrão
+      expect(flow.grant_types).toEqual([]);
+      expect(flow.scopes).toEqual([]);
+      expect(flow.redirect_uris).toEqual([]);
     });
 
-    // --------------------------------------------------------------------------------------------
+    it("deve atribuir corretamente os valores fornecidos nas opções", () => {
+      const options = {
+        id: 123,
+        client_id: "provided-client-id",
+        client_secret: "provided-secret",
+        issues_refresh_token: false,
+        redirect_uri_required: false,
+        scopes_required: true,
+        state_required: false,
+        match_all_scopes: false,
+        refresh_token_expires_in: 86400, // 1 dia
+        token_expires_in: 1800, // 30 minutos
+        grant_types: "authorization_code refresh_token",
+        scopes: "scopeA scopeB",
+        redirect_uris: "https://app.com/callback http://localhost/cb",
+      };
 
-    it("validateScopes() - validating a invalid param expected scope", () => {
-      let errorExpected;
-      try {
-        authFlow.validateScopes();
-      } catch (error) {
-        errorExpected = error;
-      }
+      const flow = new AuthFlow(options);
 
-      expect(errorExpected).toHaveProperty("error", "invalid_scope");
-      expect(errorExpected).toHaveProperty(
-        "more_info",
-        "validateScopes(): No scopes informed but this client requires scopes to be informed"
-      );
-    });
+      expect(flow.id).toBe(123);
+      expect(flow.client_id).toBe("provided-client-id");
+      expect(flow.client_secret).toBe("provided-secret");
+      expect(flow.issues_refresh_token).toBe(false);
+      expect(flow.redirect_uri_required).toBe(false);
+      expect(flow.scopes_required).toBe(true);
+      expect(flow.state_required).toBe(false);
+      expect(flow.match_all_scopes).toBe(false);
+      expect(flow.refresh_token_expires_in).toBe(86400);
+      expect(flow.token_expires_in).toBe(1800);
 
-    // --------------------------------------------------------------------------------------------
-
-    it("validateScopes() - validating a valid scopes among several scopes", () => {
-      authFlow = new AuthFlow({ ...copyClientData, match_all_scopes: false });
-      expect(authFlow.validateScopes(["scopeC", "scopeB"])).toEqual(["scopeB"]);
-    });
-
-    // --------------------------------------------------------------------------------------------
-
-    it("validateScopes() - validating a invalid scopes among several scopes", () => {
-      let errorExpected;
-      try {
-        authFlow = new AuthFlow({ ...copyClientData });
-        authFlow.validateScopes(["scopeX", "scopeY"]);
-      } catch (error) {
-        errorExpected = error;
-      }
-
-      expect(errorExpected).toHaveProperty("error", "invalid_scope");
-      expect(errorExpected).toHaveProperty(
-        "more_info",
-        "validateScopes(): The scope scopeX is not valid"
-      );
-    });
-
-    // --------------------------------------------------------------------------------------------
-
-    it("validateScopes() - validating valid scopes with match all scopes enabled", () => {
-      expect(authFlow.validateScopes(["scopeA", "scopeB"])).toEqual([
-        "scopeA",
-        "scopeB",
+      // Verifica se as strings foram corretamente divididas em arrays
+      expect(flow.grant_types).toEqual(["authorization_code", "refresh_token"]);
+      expect(flow.scopes).toEqual(["scopeA", "scopeB"]);
+      expect(flow.redirect_uris).toEqual([
+        "https://app.com/callback",
+        "http://localhost/cb",
       ]);
     });
 
-    // --------------------------------------------------------------------------------------------
+    it("deve processar corretamente strings com espaços extras", () => {
+      const options = {
+        client_id: "client-1",
+        grant_types: " type1  type2 ", // Espaços no início, fim e extras no meio
+        scopes: "scopeA   scopeB",
+        redirect_uris: "uri1 ",
+      };
 
-    it("validateScopes() - validating invalid scopes with match all scopes enabled", () => {
-      let errorExpected;
-      try {
-        authFlow.validateScopes(["scopeX", "scopeY"]);
-      } catch (error) {
-        errorExpected = error;
-      }
+      const flow = new AuthFlow(options);
 
-      expect(errorExpected).toHaveProperty("error", "invalid_scope");
-      expect(errorExpected).toHaveProperty(
-        "more_info",
-        "validateScopes(): The scope scopeX is not valid"
-      );
+      // A lógica de split deve ignorar os espaços extras
+      expect(flow.grant_types).toEqual(["type1", "type2"]);
+      expect(flow.scopes).toEqual(["scopeA", "scopeB"]);
+      expect(flow.redirect_uris).toEqual(["uri1"]);
+    });
+
+    it("deve tratar 'grant_types', 'scopes' e 'redirect_uris' como arrays vazios se forem nulos, vazios ou não-strings", () => {
+      // Teste com valores nulos, indefinidos e string vazia
+      const flow1 = new AuthFlow({
+        client_id: "client-1",
+        grant_types: null,
+        scopes: "",
+        redirect_uris: undefined,
+      });
+      expect(flow1.grant_types).toEqual([]);
+      expect(flow1.scopes).toEqual([]);
+      expect(flow1.redirect_uris).toEqual([]);
+
+      // Teste com tipos de dados incorretos
+      const flow2 = new AuthFlow({
+        client_id: "client-2",
+        grant_types: [], // Não é string
+        scopes: {}, // Não é string
+        redirect_uris: 123, // Não é string
+      });
+      expect(flow2.grant_types).toEqual([]);
+      expect(flow2.scopes).toEqual([]);
+      expect(flow2.redirect_uris).toEqual([]);
     });
   });
 
-  // ----------------------------------------------------------------------------------------------
+  // ================================================================================================================================================
 
-  describe("generateToken()", () => {
-    it("generateToken() - setting a valid generateToken function and retrieve a token from new function", async () => {
-      CopyAuthFlow.prototype.generateToken = (params) => {
-        return {
-          access_token: "qwerasdfzxc",
-          expires_in: 3600,
-          token_type: "Bearer",
-          params: "param",
-        };
-      };
-
-      authFlow = new CopyAuthFlow();
-
-      const token = await authFlow.generateToken("param");
-      expect(token).toHaveProperty("access_token", "qwerasdfzxc");
-      expect(token).toHaveProperty("expires_in", 3600);
-      expect(token).toHaveProperty("token_type", "Bearer");
-      expect(token).toHaveProperty("params", "param");
+  describe("validateScopes()", () => {
+    it("deve validar um escopo válido contido em uma string", () => {
+      const granted = authFlow.validateScopes("scopeA");
+      expect(granted).toEqual(["scopeA"]);
     });
 
-    // --------------------------------------------------------------------------------------------
+    it("deve validar múltiplos escopos válidos", () => {
+      const granted = authFlow.validateScopes("scopeA scopeB");
+      expect(granted).toEqual(["scopeA", "scopeB"]);
+    });
 
-    it("generateToken() - not setting a generateToken function to throw an error", async () => {
-      let errorExpected;
+    it("deve lançar 'invalid_scope' para um escopo inválido", () => {
+      expect.assertions(4);
+      try {
+        authFlow.validateScopes("scopeX");
+      } catch (error) {
+        expect(error.constructor.name).toBe("OAuthError");
+        expect(error.error).toBe(ERROR_SPECS.INVALID_SCOPE.code);
+        expect(error.error_description).toBe(
+          ERROR_SPECS.INVALID_SCOPE.description
+        );
+        expect(error.status).toBe(ERROR_SPECS.INVALID_SCOPE.status);
+      }
+    });
+
+    it("deve retornar apenas os escopos válidos quando match_all_scopes é false", () => {
+      const customFlow = new AuthFlow({
+        ...{ ...clientData },
+        match_all_scopes: false,
+      });
+      const granted = customFlow.validateScopes("scopeC scopeB");
+      expect(granted).toEqual(["scopeB"]);
+    });
+
+    it("deve lançar erro se match_all_scopes for true e um escopo for inválido", () => {
+      expect.assertions(4);
+      try {
+        authFlow.validateScopes("scopeA scopeX");
+      } catch (error) {
+        expect(error.constructor.name).toBe("OAuthError");
+        expect(error.error).toBe(ERROR_SPECS.INVALID_SCOPE.code);
+        expect(error.error_description).toBe(
+          ERROR_SPECS.INVALID_SCOPE.description
+        );
+        expect(error.status).toBe(ERROR_SPECS.INVALID_SCOPE.status);
+      }
+    });
+
+    it("deve lançar erro se escopos são obrigatórios mas nenhum é fornecido", () => {
+      const customFlow = new AuthFlow({
+        ...{ ...clientData },
+        scopes_required: true,
+      });
+      expect.assertions(4);
+      try {
+        customFlow.validateScopes("");
+      } catch (error) {
+        expect(error.constructor.name).toBe("OAuthError");
+        expect(error.error).toBe(ERROR_SPECS.INVALID_SCOPE.code);
+        expect(error.error_description).toBe(
+          ERROR_SPECS.INVALID_SCOPE.description
+        );
+        expect(error.status).toBe(ERROR_SPECS.INVALID_SCOPE.status);
+      }
+    });
+
+    it("não deve lançar erro se escopos não são obrigatórios e nenhum é fornecido", () => {
+      const customFlow = new AuthFlow({
+        ...{ ...clientData },
+        scopes_required: false,
+      });
+      const granted = customFlow.validateScopes("");
+      expect(granted).toEqual([]);
+    });
+
+    test("deve aceitar escopo válido com espaços extras", () => {
+      expect(authFlow.validateScopes(" scopeA ")).toEqual(["scopeA"]);
+    });
+
+    test("deve lançar erro para escopo com case diferente (se case-sensitive)", () => {
+      expect.assertions(4);
+      try {
+        authFlow.validateScopes("ScopeA");
+      } catch (error) {
+        expect(error.constructor.name).toBe("OAuthError");
+        expect(error.error).toBe(ERROR_SPECS.INVALID_SCOPE.code);
+        expect(error.error_description).toBe(
+          ERROR_SPECS.INVALID_SCOPE.description
+        );
+        expect(error.status).toBe(ERROR_SPECS.INVALID_SCOPE.status);
+      }
+    });
+
+    test("deve lançar erro para string de escopos separados por vírgula não suportada", () => {
+      expect.assertions(4);
+      try {
+        authFlow.validateScopes("scopeA,scopeX");
+      } catch (error) {
+        expect(error.constructor.name).toBe("OAuthError");
+        expect(error.error).toBe(ERROR_SPECS.INVALID_SCOPE.code);
+        expect(error.error_description).toBe(
+          ERROR_SPECS.INVALID_SCOPE.description
+        );
+        expect(error.status).toBe(ERROR_SPECS.INVALID_SCOPE.status);
+      }
+    });
+  });
+
+  // ================================================================================================================================================
+
+  describe("Métodos Abstratos", () => {
+    it("generateToken() deve lançar 'todo_error' por padrão", async () => {
+      expect.assertions(4);
       try {
         await authFlow.generateToken();
       } catch (error) {
-        errorExpected = error;
+        expect(error.constructor.name).toBe("OAuthError");
+        expect(error.error).toBe(ERROR_SPECS.TODO_ERROR.code);
+        expect(error.error_description).toBe(
+          ERROR_SPECS.TODO_ERROR.description
+        );
+        expect(error.status).toBe(ERROR_SPECS.TODO_ERROR.status);
       }
+    });
 
-      expect(errorExpected).toHaveProperty("error", "todo_error");
-      expect(errorExpected).toHaveProperty(
-        "more_info",
-        "generateToken(): not implemented yet!"
-      );
+    it("validateToken() deve lançar 'todo_error' por padrão", async () => {
+      expect.assertions(4);
+      try {
+        await authFlow.validateToken("some-token");
+      } catch (error) {
+        expect(error.constructor.name).toBe("OAuthError");
+        expect(error.error).toBe(ERROR_SPECS.TODO_ERROR.code);
+        expect(error.error_description).toBe(
+          ERROR_SPECS.TODO_ERROR.description
+        );
+        expect(error.status).toBe(ERROR_SPECS.TODO_ERROR.status);
+      }
+    });
+
+    it("getToken() deve lançar 'todo_error' por padrão", async () => {
+      expect.assertions(4);
+      try {
+        await authFlow.getToken();
+      } catch (error) {
+        expect(error.constructor.name).toBe("OAuthError");
+        expect(error.error).toBe(ERROR_SPECS.TODO_ERROR.code);
+        expect(error.error_description).toBe(
+          ERROR_SPECS.TODO_ERROR.description
+        );
+        expect(error.status).toBe(ERROR_SPECS.TODO_ERROR.status);
+      }
     });
   });
 
-  // ----------------------------------------------------------------------------------------------
+  // ================================================================================================================================================
 
-  describe("getToken()", () => {
-    it("getToken() - setting a valid getToken function and retrieve a token information", async () => {
-      CopyAuthFlow.prototype.getToken = (token) => {
-        return {
-          sub: "1234567890",
-          name: "John Doe",
-          admin: true,
-          iat: 1516239022,
-          exp: 1516239022,
-          scope: "scopeA scopeB",
-        };
-      };
-
-      authFlow = new CopyAuthFlow();
-
-      const token = await authFlow.getToken("qwerasdfzxc");
-      expect(token).toHaveProperty("sub", "1234567890");
-      expect(token).toHaveProperty("name", "John Doe");
-      expect(token).toHaveProperty("admin", true);
-      expect(token).toHaveProperty("exp", 1516239022);
+  describe("validateGrantType()", () => {
+    it("deve retornar true para um grant_type permitido", () => {
+      expect(authFlow.validateGrantType("authorization_code")).toBe(true);
+      expect(authFlow.validateGrantType("client_credentials")).toBe(true);
     });
 
-    // --------------------------------------------------------------------------------------------
-
-    it("getToken() - not setting a getToken function to throw an error", async () => {
-      let errorExpected;
+    it("deve lançar 'UNSUPPORTED_GRANT_TYPE' para um grant_type não permitido", () => {
+      expect.assertions(4);
       try {
-        await authFlow.getToken("qwerasdfzxc");
+        authFlow.validateGrantType("password");
       } catch (error) {
-        errorExpected = error;
+        expect(error.constructor.name).toBe("OAuthError");
+        expect(error.error).toBe(ERROR_SPECS.UNSUPPORTED_GRANT_TYPE.code);
+        expect(error.error_description).toBe(
+          ERROR_SPECS.UNSUPPORTED_GRANT_TYPE.description
+        );
+        expect(error.status).toBe(ERROR_SPECS.UNSUPPORTED_GRANT_TYPE.status);
       }
+    });
 
-      expect(errorExpected).toHaveProperty("error", "todo_error");
-      expect(errorExpected).toHaveProperty(
-        "more_info",
-        "getToken(): not implemented yet!"
-      );
+    it("deve lançar 'UNSUPPORTED_GRANT_TYPE' quando grant_type é undefined", () => {
+      expect.assertions(4);
+      try {
+        authFlow.validateGrantType(undefined);
+      } catch (error) {
+        expect(error.constructor.name).toBe("OAuthError");
+        expect(error.error).toBe(ERROR_SPECS.UNSUPPORTED_GRANT_TYPE.code);
+        expect(error.error_description).toBe(
+          ERROR_SPECS.UNSUPPORTED_GRANT_TYPE.description
+        );
+        expect(error.status).toBe(ERROR_SPECS.UNSUPPORTED_GRANT_TYPE.status);
+      }
+    });
+
+    it("deve lançar 'UNSUPPORTED_GRANT_TYPE' quando grant_type é null", () => {
+      expect.assertions(4);
+      try {
+        authFlow.validateGrantType(null);
+      } catch (error) {
+        expect(error.constructor.name).toBe("OAuthError");
+        expect(error.error).toBe(ERROR_SPECS.UNSUPPORTED_GRANT_TYPE.code);
+        expect(error.error_description).toBe(
+          ERROR_SPECS.UNSUPPORTED_GRANT_TYPE.description
+        );
+        expect(error.status).toBe(ERROR_SPECS.UNSUPPORTED_GRANT_TYPE.status);
+      }
+    });
+
+    it("deve lançar 'UNSUPPORTED_GRANT_TYPE' quando grant_type é string vazia", () => {
+      expect.assertions(4);
+      try {
+        authFlow.validateGrantType("");
+      } catch (error) {
+        expect(error.constructor.name).toBe("OAuthError");
+        expect(error.error).toBe(ERROR_SPECS.UNSUPPORTED_GRANT_TYPE.code);
+        expect(error.error_description).toBe(
+          ERROR_SPECS.UNSUPPORTED_GRANT_TYPE.description
+        );
+        expect(error.status).toBe(ERROR_SPECS.UNSUPPORTED_GRANT_TYPE.status);
+      }
+    });
+
+    it("deve lançar 'UNSUPPORTED_GRANT_TYPE' quando grant_types do cliente está vazio", () => {
+      authFlow.grant_types = [];
+      expect.assertions(4);
+      try {
+        authFlow.validateGrantType("authorization_code");
+      } catch (error) {
+        expect(error.constructor.name).toBe("OAuthError");
+        expect(error.error).toBe(ERROR_SPECS.UNSUPPORTED_GRANT_TYPE.code);
+        expect(error.error_description).toBe(
+          ERROR_SPECS.UNSUPPORTED_GRANT_TYPE.description
+        );
+        expect(error.status).toBe(ERROR_SPECS.UNSUPPORTED_GRANT_TYPE.status);
+      }
+    });
+
+    it("deve lançar 'UNSUPPORTED_GRANT_TYPE' quando grant_types está com case sensitive diferente", () => {
+      authFlow.grant_types = [];
+      expect.assertions(4);
+      try {
+        authFlow.validateGrantType("Authorization_code");
+      } catch (error) {
+        expect(error.constructor.name).toBe("OAuthError");
+        expect(error.error).toBe(ERROR_SPECS.UNSUPPORTED_GRANT_TYPE.code);
+        expect(error.error_description).toBe(
+          ERROR_SPECS.UNSUPPORTED_GRANT_TYPE.description
+        );
+        expect(error.status).toBe(ERROR_SPECS.UNSUPPORTED_GRANT_TYPE.status);
+      }
+    });
+
+    it("deve lançar 'UNSUPPORTED_GRANT_TYPE' quando grant_types possui espaços ou mal formatado", () => {
+      authFlow.grant_types = [];
+      expect.assertions(4);
+      try {
+        authFlow.validateGrantType("authorization_code ");
+      } catch (error) {
+        expect(error.constructor.name).toBe("OAuthError");
+        expect(error.error).toBe(ERROR_SPECS.UNSUPPORTED_GRANT_TYPE.code);
+        expect(error.error_description).toBe(
+          ERROR_SPECS.UNSUPPORTED_GRANT_TYPE.description
+        );
+        expect(error.status).toBe(ERROR_SPECS.UNSUPPORTED_GRANT_TYPE.status);
+      }
     });
   });
 
-  // ----------------------------------------------------------------------------------------------
+  // ================================================================================================================================================
 
-  describe("validateToken()", () => {
-    it("validateToken() - setting a valid validateToken function and validate a given token", async () => {
-      CopyAuthFlow.prototype.validateToken = (token) => {
-        if (token === "qwerasdfzxc") {
-          return true;
-        }
-      };
-
-      authFlow = new CopyAuthFlow();
-
-      const token = await authFlow.validateToken("qwerasdfzxc");
-      expect(token).toBe(true);
+  describe("validateResponseType()", () => {
+    it("deve retornar true quando o response_type recebido é igual ao esperado", () => {
+      expect(AuthFlow.validateResponseType("code", "code")).toBe(true);
     });
 
-    // --------------------------------------------------------------------------------------------
-
-    it("validateToken() - not setting a validateToken function to throw an error", async () => {
-      let errorExpected;
+    it('deve lançar "INVALID_REQUEST" quando response_type é undefined', () => {
+      expect.assertions(4);
       try {
-        await authFlow.validateToken("qwerasdfzxc");
+        AuthFlow.validateResponseType(undefined, "code");
       } catch (error) {
-        errorExpected = error;
+        expect(error.constructor.name).toBe("OAuthError");
+        expect(error.error).toBe(ERROR_SPECS.INVALID_REQUEST.code);
+        expect(error.error_description).toBe(
+          ERROR_SPECS.INVALID_REQUEST.description
+        );
+        expect(error.status).toBe(ERROR_SPECS.INVALID_REQUEST.status);
       }
+    });
 
-      expect(errorExpected).toHaveProperty("error", "todo_error");
-      expect(errorExpected).toHaveProperty(
-        "more_info",
-        "validateToken(): not implemented yet!"
-      );
+    it('deve lançar "INVALID_REQUEST" quando response_type é null', () => {
+      expect.assertions(4);
+      try {
+        AuthFlow.validateResponseType(null, "code");
+      } catch (error) {
+        expect(error.constructor.name).toBe("OAuthError");
+        expect(error.error).toBe(ERROR_SPECS.INVALID_REQUEST.code);
+        expect(error.error_description).toBe(
+          ERROR_SPECS.INVALID_REQUEST.description
+        );
+        expect(error.status).toBe(ERROR_SPECS.INVALID_REQUEST.status);
+      }
+    });
+
+    it('deve lançar "INVALID_REQUEST" quando response_type é string vazia', () => {
+      expect.assertions(4);
+      try {
+        AuthFlow.validateResponseType("", "code");
+      } catch (error) {
+        expect(error.constructor.name).toBe("OAuthError");
+        expect(error.error).toBe(ERROR_SPECS.INVALID_REQUEST.code);
+        expect(error.error_description).toBe(
+          ERROR_SPECS.INVALID_REQUEST.description
+        );
+        expect(error.status).toBe(ERROR_SPECS.INVALID_REQUEST.status);
+      }
+    });
+
+    it('deve lançar "UNSUPPORTED_RESPONSE_TYPE" quando response_type é diferente do esperado', () => {
+      expect.assertions(4);
+      try {
+        AuthFlow.validateResponseType("token", "code");
+      } catch (error) {
+        expect(error.constructor.name).toBe("OAuthError");
+        expect(error.error).toBe(ERROR_SPECS.UNSUPPORTED_RESPONSE_TYPE.code);
+        expect(error.error_description).toBe(
+          ERROR_SPECS.UNSUPPORTED_RESPONSE_TYPE.description
+        );
+        expect(error.status).toBe(ERROR_SPECS.UNSUPPORTED_RESPONSE_TYPE.status);
+      }
+    });
+
+    it('deve lançar "UNSUPPORTED_RESPONSE_TYPE" quando expectedResponseType está definido mas não bate', () => {
+      expect.assertions(4);
+      try {
+        AuthFlow.validateResponseType("id_token", "code");
+      } catch (error) {
+        expect(error.constructor.name).toBe("OAuthError");
+        expect(error.error).toBe(ERROR_SPECS.UNSUPPORTED_RESPONSE_TYPE.code);
+        expect(error.error_description).toBe(
+          ERROR_SPECS.UNSUPPORTED_RESPONSE_TYPE.description
+        );
+        expect(error.status).toBe(ERROR_SPECS.UNSUPPORTED_RESPONSE_TYPE.status);
+      }
+    });
+
+    it('deve lançar "UNSUPPORTED_RESPONSE_TYPE" quando o response_type informado tem está mal formatado', () => {
+      expect.assertions(4);
+      try {
+        AuthFlow.validateResponseType("code ", "code");
+      } catch (error) {
+        expect(error.constructor.name).toBe("OAuthError");
+        expect(error.error).toBe(ERROR_SPECS.UNSUPPORTED_RESPONSE_TYPE.code);
+        expect(error.error_description).toBe(
+          ERROR_SPECS.UNSUPPORTED_RESPONSE_TYPE.description
+        );
+        expect(error.status).toBe(ERROR_SPECS.UNSUPPORTED_RESPONSE_TYPE.status);
+      }
     });
   });
 });

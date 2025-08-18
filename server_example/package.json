@@ -1,0 +1,16 @@
+{
+  "name": "auth_server_example",
+  "version": "1.0.0",
+  "description": "Servidor de teste para a biblioteca OAuth2 customizada",
+  "main": "start.js",
+  "scripts": {
+    "start": "node start.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Arthur J.Germano",
+  "license": "MIT",
+  "dependencies": {
+    "fastify": "^5.4.0",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

@@ -1,41 +1,21 @@
 const fs = require("fs");
 const path = require("path");
 const jwt = require("jsonwebtoken");
-const { createHash, randomBytes } = require("crypto");
 
 // ==================================================================================================================================================
 
+// --- Carregamento de Chaves ---
+// Aponte para o diretório correto das chaves
 const privateKey = fs.readFileSync(
-  path.resolve(__dirname, "./keys/jwtRS512.key")
+  path.resolve(__dirname, "../keys/jwtRS512.key")
 );
 const publicKey = fs.readFileSync(
-  path.resolve(__dirname, "./keys/jwtRS512.key.pub")
+  path.resolve(__dirname, "../keys/jwtRS512.key.pub")
 );
 
 // ==================================================================================================================================================
 
-const clientData = {
-  client_id: "abcxyz",
-  client_secret: "abcxyz2",
-  grant_types:
-    "client_credentials authorization_code refresh_token device_code",
-  redirect_uris:
-    "http://localhost:3000/cb http://localhost:3000/cb2 http://localhost:3000/cb3",
-  scopes: "scopeA scopeB",
-  scopes_required: true,
-  state_required: true,
-  redirect_uri_required: true,
-  match_all_scopes: true,
-  pkce_required: true,
-  verification_uris:
-    "http://localhost:3000/activate",
-  issuer: "my company issuer1",
-  device_code_expires_in: 1800,
-  verification_uri: "http://localhost:3000/activate",
-  verification_uri_complete: "http://localhost:3000/activate?user_code=",
-};
-
-// ==================================================================================================================================================
+// --- Funções de JWT ---
 
 function checkToken(token) {
   return new Promise((resolve, reject) => {
@@ -52,10 +32,12 @@ function checkToken(token) {
 
 function signToken(jwtContent = {}) {
   return new Promise((resolve, reject) => {
+    // Adiciona o timestamp 'iat' (issued at) em todas as assinaturas
     jwtContent.iat = Math.floor(Date.now() / 1000);
     jwt.sign(jwtContent, privateKey, { algorithm: "RS512" }, (err, token) => {
       if (err) {
-        return resolve(err);
+        // Em caso de erro na assinatura, rejeitamos a promessa
+        return reject(err);
       }
       resolve(token);
     });
@@ -76,36 +58,30 @@ function decodeToken(token) {
 
 // ==================================================================================================================================================
 
-function generateRandomBytes(size = 32) {
-  return randomBytes(size);
+// --- Carregamento de Dados ---
+
+/**
+ * Carrega e retorna os dados dos clientes do arquivo JSON.
+ * @returns {Array} Array de objetos de cliente.
+ */
+function getClients() {
+  const clientsData = fs.readFileSync(
+    path.resolve(__dirname, "../db/client_data.json")
+  );
+  return JSON.parse(clientsData);
 }
 
 // ==================================================================================================================================================
 
-function base64URLEncode(str) {
-  return str
-    .toString("base64")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=/g, "");
-}
-
-// ==================================================================================================================================================
-
-function generateVerifier() {
-  return base64URLEncode(generateRandomBytes());
-}
-
-// ==================================================================================================================================================
-
-function sha(buffer, algorithm = "sha256") {
-  return createHash(algorithm).update(buffer).digest();
-}
-
-// ==================================================================================================================================================
-
-function generateChallenge(verifier, algorithm) {
-  return base64URLEncode(sha(verifier, algorithm));
+/**
+ * Encontra um cliente pelo seu client_id.
+ * @param {string} clientId O ID do cliente a ser encontrado.
+ * @returns {object|undefined} O objeto do cliente ou undefined se não for encontrado.
+ */
+function findClientById(clientId) {
+  const clients = getClients();
+  // No mundo real, isso seria uma query em um banco de dados (ex: SELECT * FROM clients WHERE client_id = ?)
+  return clients.find((c) => c.client_id === clientId);
 }
 
 // ==================================================================================================================================================
@@ -114,12 +90,7 @@ module.exports = {
   checkToken,
   signToken,
   decodeToken,
-  clientData,
-  generateChallenge,
-  sha,
-  generateVerifier,
-  base64URLEncode,
-  generateRandomBytes,
+  findClientById,
 };
 
 // ==================================================================================================================================================

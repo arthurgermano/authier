@@ -1,0 +1,15 @@
+[
+  {
+    "client_id": "abcxyz",
+    "client_secret": "abcxyz2",
+    "grant_types": "client_credentials authorization_code device_code refresh_token",
+    "redirect_uris": "http://localhost:3000/cb",
+    "scopes": "scopeA scopeB",
+    "scopes_required": true,
+    "state_required": true,
+    "redirect_uri_required": true,
+    "issuer": "my company issuer1",
+    "verification_uri": "https://example.com/activate",
+    "verification_uri_complete": "https://example.com/activate?user_code="
+  }
+]

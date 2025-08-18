@@ -1,21 +1,42 @@
 {
   "name": "authier",
-  "version": "5.0.9",
+  "version": "6.0.0",
   "author": "Arthur José Germano",
   "license": "MIT",
-  "main": "src/index.js",
+  "description": "Uma biblioteca leve e robusta para implementação de servidores OAuth 2.1, focada em segurança e conformidade com as RFCs.",
+  "main": "./dist/index.cjs",
+  "type": "module",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
   "scripts": {
     "test": "vitest --run --reporter verbose --globals",
-    "testfile": "vitest --run --reporter verbose --globals ./tests/refreshTokenFlow.test.js"
+    "testAuthFlow": "vitest --run --reporter verbose --globals ./tests/authFlow.test.js",
+    "testRefreshFlow": "vitest --run --reporter verbose --globals ./tests/refreshTokenFlow.test.js",
+    "testDeviceFlow": "vitest --run --reporter verbose --globals ./tests/deviceCodeFlow.test.js",
+    "testClientFlow": "vitest --run --reporter verbose --globals ./tests/clientCredentialsFlow.test.js",
+    "testAuthorizationCodeFlow": "vitest --run --reporter verbose --globals ./tests/authorizationCodeFlow.test.js",
+    "testErrors": "vitest --run --reporter verbose --globals ./tests/errors.test.js",
+    "build": "tsup src/index.js --format cjs,esm --dts --clean"
   },
   "keywords": [
     "oauth2",
-    "authentication",
-    "RFC6749",
-    "grant",
-    "server",
     "oauth2.1",
-    "oauth3"
+    "authentication",
+    "authorization",
+    "jwt",
+    "security",
+    "server",
+    "RFC6749"
   ],
   "repository": {
     "type": "git",
@@ -24,10 +45,17 @@
   "bugs": {
     "url": "https://github.com/arthurgermano/authier/issues"
   },
-  "dependencies": {
-    "jsonwebtoken": "^9.0.0"
+  "homepage": "https://github.com/arthurgermano/authier#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {},
+  "peerDependencies": {
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
-    "vitest": "^0.28.4"
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
   }
 }
