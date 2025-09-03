@@ -21,6 +21,15 @@
     - [3. Refresh Token Flow](#3-refresh-token-flow)
     - [4. Device Code Flow](#4-device-code-flow)
   - [Tratamento de Erros](#tratamento-de-erros)
+    - [Erros Padrão (RFC 6749)](#erros-padrão-rfc-6749)
+    - [Erros Específicos (RFC 8628 - Device Flow)](#erros-específicos-rfc-8628---device-flow)
+    - [Erros Adicionais Úteis](#erros-adicionais-úteis)
+    - [Erros Relacionados a Rate Limiting](#erros-relacionados-a-rate-limiting)
+    - [Erros Relacionados a PKCE (RFC 7636)](#erros-relacionados-a-pkce-rfc-7636)
+    - [Erros de Configuração e Estado](#erros-de-configuração-e-estado)
+    - [Erros Customizados (Específicos da sua aplicação)](#erros-customizados-específicos-da-sua-aplicação)
+    - [Erros de Validação de Dados](#erros-de-validação-de-dados)
+    - [Erros de Segurança](#erros-de-segurança)
   - [Testando](#testando)
   - [Licença](#licença)
 
@@ -275,21 +284,62 @@ function myValidation(code) {
 
 A biblioteca já lida com a maioria dos erros de validação de parâmetros. Você precisará lançar `OAuthError` principalmente na sua lógica de persistência (ex: código não encontrado, token revogado).
 
-**Erros Comuns:**
 
--   `INVALID_REQUEST`: Parâmetro faltando ou malformado.
--   `INVALID_CLIENT`: Falha na autenticação do cliente.
--   `INVALID_GRANT`: Credencial inválida (código, refresh token, etc.).
--   `INVALID_SCOPE`: Escopo inválido ou não permitido.
--   `UNSUPPORTED_GRANT_TYPE`: O cliente não tem permissão para usar o fluxo.
--   `ACCESS_DENIED`: O usuário ou o servidor negou a requisição.
--   `SERVER_ERROR`: Erro inesperado no servidor.
+### Erros Padrão (RFC 6749)
 
-**Erros do Device Flow:**
+-   **`access_denied`**: O proprietário do recurso ou o servidor de autorização negou a solicitação. (Status: 403)
+-   **`invalid_client`**: A autenticação do cliente falhou (ex: cliente desconhecido, sem autenticação incluída ou método não suportado). (Status: 401)
+-   **`invalid_grant`**: A concessão de autorização (ex: código de autorização, credenciais) ou o refresh token é inválido, expirado, revogado ou foi emitido para outro cliente. (Status: 400)
+-   **`invalid_request`**: A requisição está faltando um parâmetro obrigatório, inclui um valor de parâmetro não suportado, repete um parâmetro ou está malformada. (Status: 400)
+-   **`invalid_scope`**: O escopo solicitado é inválido, desconhecido, malformado ou excede o escopo concedido. (Status: 400)
+-   **`server_error`**: O servidor de autorização encontrou uma condição inesperada que o impediu de atender à solicitação. (Status: 500)
+-   **`temporarily_unavailable`**: O servidor de autorização está temporariamente indisponível devido a sobrecarga ou manutenção. (Status: 503)
+-   **`unsupported_grant_type`**: O tipo de concessão de autorização não é suportado pelo servidor. (Status: 400)
+-   **`unsupported_response_type`**: O servidor de autorização não suporta a obtenção de um código de autorização usando este método. (Status: 400)
 
--   `AUTHORIZATION_PENDING`: O usuário ainda não aprovou a requisição.
--   `SLOW_DOWN`: O cliente está fazendo polling muito rápido.
--   `EXPIRED_TOKEN`: O `device_code` expirou.
+### Erros Específicos (RFC 8628 - Device Flow)
+
+-   **`authorization_pending`**: A autorização do usuário está pendente. O cliente deve continuar o polling. (Status: 400)
+-   **`slow_down`**: O cliente está fazendo o polling com muita frequência. A frequência deve ser reduzida. (Status: 400)
+-   **`expired_token`**: O `device_code` expirou e o fluxo de autorização deve ser reiniciado. (Status: 400)
+
+### Erros Adicionais Úteis
+
+-   **`invalid_token`**: O token de acesso fornecido é inválido, malformado, expirado ou foi revogado. (Status: 401)
+-   **`insufficient_scope`**: O token de acesso não possui os escopos necessários para acessar o recurso solicitado. (Status: 403)
+-   **`unauthorized_client`**: O cliente não está autorizado a usar este método de concessão de autorização. (Status: 400)
+-   **`invalid_redirect_uri`**: A URI de redirecionamento fornecida não é válida ou não corresponde às URIs pré-registradas. (Status: 400)
+-   **`unsupported_token_type`**: O servidor de autorização não suporta a revogação do tipo de token apresentado. (Status: 400)
+
+### Erros Relacionados a Rate Limiting
+
+-   **`too_many_requests`**: O cliente excedeu o limite de taxa de requisições. Tente novamente mais tarde. (Status: 429)
+
+### Erros Relacionados a PKCE (RFC 7636)
+
+-   **`invalid_request`**: O `code_challenge` fornecido é inválido, malformado ou usa um método não suportado. (Status: 400)
+-   **`invalid_grant`**: O `code_verifier` fornecido não corresponde ao `code_challenge` da requisição de autorização. (Status: 400)
+
+### Erros de Configuração e Estado
+
+-   **`server_error`**: Erro na configuração do servidor de autorização. Contate o administrador. (Status: 500)
+-   **`temporarily_unavailable`**: O serviço de autorização está temporariamente indisponível para manutenção. (Status: 503)
+
+### Erros Customizados (Específicos da sua aplicação)
+
+-   **`mismatch_client`**: A autenticação do cliente falhou - cliente não corresponde. (Status: 400)
+-   **`todo_error`**: A funcionalidade solicitada ainda não foi implementada. (Status: 501)
+
+### Erros de Validação de Dados
+
+-   **`invalid_request`**: A requisição contém dados malformados ou não pode ser processada. (Status: 400)
+-   **`invalid_request`**: Um parâmetro obrigatório está ausente da requisição. (Status: 400)
+-   **`invalid_request`**: A requisição contém parâmetros duplicados que devem ser únicos. (Status: 400)
+
+### Erros de Segurança
+
+-   **`invalid_grant`**: Tentativa de reutilização de uma concessão de uso único detectada. (Status: 400)
+-   **`access_denied`**: Atividade suspeita detectada. A requisição foi negada por motivos de segurança. (Status: 403)
 
 ---
 
