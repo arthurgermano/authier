@@ -24,7 +24,7 @@ class ClientCredentialsFlow extends AuthFlow {
   async getToken({ scope, token_info }) {
     // 1. Valida se o cliente tem permissão para usar este grant type.
     // Note que não há `try/catch` aqui, pois o erro deve se propagar naturalmente.
-    this.validateGrantType("client_credentials", this.grant_types);
+    this.validateGrantType("client_credentials");
 
     // 2. Valida os escopos solicitados (se houver) contra os permitidos para o cliente.
     // Nossa `validateScopes` refatorada espera a string de escopo e retorna os escopos concedidos.

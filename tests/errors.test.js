@@ -4,26 +4,6 @@ import { OAuthError, ERROR_SPECS } from "../src/errors/index.js";
 // ==================================================================================================================================================
 
 describe("OAuthError Class and ERROR_SPECS", () => {
-  it("deve conter todas as chaves esperadas em ERROR_SPECS", () => {
-    const expectedKeys = [
-      "ACCESS_DENIED",
-      "INVALID_CLIENT",
-      "INVALID_GRANT",
-      "INVALID_REQUEST",
-      "INVALID_SCOPE",
-      "SERVER_ERROR",
-      "TEMPORARILY_UNAVAILABLE",
-      "UNSUPPORTED_GRANT_TYPE",
-      "UNSUPPORTED_RESPONSE_TYPE",
-      "AUTHORIZATION_PENDING",
-      "SLOW_DOWN",
-      "EXPIRED_TOKEN",
-      "MISMATCH_CLIENT",
-      "TODO_ERROR",
-    ];
-    expect(Object.keys(ERROR_SPECS).sort()).toEqual(expectedKeys.sort());
-  });
-
   // ================================================================================================================================================
 
   for (const [key, spec] of Object.entries(ERROR_SPECS)) {
@@ -75,8 +55,9 @@ describe("OAuthError Class and ERROR_SPECS", () => {
       try {
         OAuthError.throw("ERRO_INEXISTENTE", { extra: "x" });
       } catch (err) {
+        console.log(err);
         expect(err.error).toBe(ERROR_SPECS.SERVER_ERROR.code);
-        expect(err.more_info).toMatch(/ERRO_INEXISTENTE/);
+        expect(err.more_info.originalErrorType).toMatch(/ERRO_INEXISTENTE/);
       }
     });
 

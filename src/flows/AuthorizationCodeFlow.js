@@ -138,7 +138,7 @@ class AuthorizationCodeFlow extends AuthFlow {
    * @returns {Promise<object>} O resultado da geração do token.
    */
   async getToken({ code, redirect_uri, code_verifier, token_info }) {
-    this.validateGrantType("authorization_code", this.grant_types);
+    this.validateGrantType("authorization_code");
 
     // 1. Valida o código e recupera os dados salvos com ele.
     const validation_data = await this.validateCode(code);

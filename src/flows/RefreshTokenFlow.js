@@ -20,7 +20,7 @@ class RefreshTokenFlow extends AuthFlow {
    */
   async getToken({ refresh_token, scope, token_info }) {
     // 1. Validações iniciais
-    this.validateGrantType("refresh_token", this.grant_types);
+    this.validateGrantType("refresh_token");
     if (!refresh_token) {
       OAuthError.throw("INVALID_REQUEST", {
         detail: 'O parâmetro "refresh_token" é obrigatório.',
@@ -49,7 +49,7 @@ class RefreshTokenFlow extends AuthFlow {
    * @returns {string[]} O array de escopos a serem concedidos.
    */
   _determineGrantedScopes(requestedScopeString, originalScopes) {
-    const requestedScopes = this._parseScopeString(requestedScopeString);
+    const requestedScopes = this._splitString(requestedScopeString);
 
     if (requestedScopes.length === 0) {
       // Nenhum escopo solicitado, o novo token herda os escopos originais.

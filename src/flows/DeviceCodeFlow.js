@@ -101,7 +101,7 @@ class DeviceCodeFlow extends AuthFlow {
    * @returns {Promise<object>} O resultado da geração do token.
    */
   async getToken({ device_code, token_info }) {
-    this.validateGrantType(this.device_grant_name, this.grant_types);
+    this.validateGrantType(this.device_grant_name);
     if (!device_code) {
       OAuthError.throw("INVALID_REQUEST", {
         detail: 'O parâmetro "device_code" é obrigatório.',

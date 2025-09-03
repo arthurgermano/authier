@@ -210,7 +210,6 @@ describe("RefreshTokenFlow", () => {
         token_info: { aud: "minha-api", custom: "valor" },
       });
       const decoded = await checkToken(accessToken);
-      console.log(decoded)
       expect(decoded.aud).toBe("minha-api");
       expect(decoded.custom).toBe("valor");
     });

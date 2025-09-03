@@ -70,16 +70,32 @@ class AuthFlow {
 
     this.match_all_scopes = options.match_all_scopes ?? true;
 
-    const splitString = (str) =>
-      typeof str === "string" && str ? str.split(" ").filter((s) => s) : [];
+    this.grant_types = this._setArray(options.grant_types);
+    this.scopes = this._setArray(options.scopes);
+    this.redirect_uris = this._setArray(options.redirect_uris);
+  }
 
-    this.grant_types = options.grant_types
-      ? splitString(options.grant_types)
-      : [];
-    this.scopes = options.scopes ? splitString(options.scopes) : [];
-    this.redirect_uris = options.redirect_uris
-      ? splitString(options.redirect_uris)
-      : [];
+  // ================================================================================================================================================
+
+  _splitString(str) {
+    if (typeof str === "string" && str) {
+      return [...new Set(str.split(" ").filter((s) => s))];
+    }
+    return [];
+  }
+
+  // ================================================================================================================================================
+
+  _setArray(obj) {
+    if (!obj) {
+      return [];
+    }
+    if (typeof obj === "string") {
+      return this._splitString(obj);
+    } else if (Array.isArray(obj)) {
+      return obj;
+    }
+    return [];
   }
 
   // ================================================================================================================================================
@@ -93,7 +109,7 @@ class AuthFlow {
   validateScopes(requestedScopeString) {
     // A lógica de `validateScopes` espera um array, mas a requisição vem como string.
     // O ideal é normalizar a entrada. O parâmetro do método foi ajustado para refletir isso.
-    const requestedScopes = this._parseScopeString(requestedScopeString);
+    const requestedScopes = this._splitString(requestedScopeString);
 
     if (requestedScopes.length === 0) {
       // Usando a propriedade com o nome original: `scopes_required`
@@ -141,22 +157,6 @@ class AuthFlow {
   // ================================================================================================================================================
 
   /**
-   * Função utilitária privada para converter a string de escopo em um array de strings.
-   * @private
-   * @param {string} scopeString - String de escopos (ex: "read write").
-   * @returns {string[]} Array de escopos (ex: ['read', 'write']).
-   */
-  _parseScopeString(scopeString) {
-    if (!scopeString || typeof scopeString !== "string") {
-      return [];
-    }
-    // Remove duplicatas e espaços vazios.
-    return [...new Set(scopeString.split(" ").filter((s) => s))];
-  }
-
-  // ================================================================================================================================================
-
-  /**
    * Valida o 'grant_type' da requisição contra os tipos permitidos para este cliente.
    * @param {string} requestedGrantType - O `grant_type` recebido na requisição.
    * @throws {OAuthError} Lança 'UNSUPPORTED_GRANT_TYPE' se o tipo não for permitido.
@@ -164,7 +164,7 @@ class AuthFlow {
    */
   validateGrantType(requestedGrantType) {
     if (!this.grant_types.includes(requestedGrantType)) {
-      OAuthError.throw('UNSUPPORTED_GRANT_TYPE', {
+      OAuthError.throw("UNSUPPORTED_GRANT_TYPE", {
         detail: `O grant_type "${requestedGrantType}" não é suportado por este cliente.`,
       });
     }
@@ -184,10 +184,14 @@ class AuthFlow {
    */
   static validateResponseType(receivedResponseType, expectedResponseType) {
     if (!receivedResponseType) {
-        OAuthError.throw('INVALID_REQUEST', { detail: 'O parâmetro "response_type" é obrigatório.' });
+      OAuthError.throw("INVALID_REQUEST", {
+        detail: 'O parâmetro "response_type" é obrigatório.',
+      });
     }
     if (receivedResponseType !== expectedResponseType) {
-        OAuthError.throw('UNSUPPORTED_RESPONSE_TYPE', { detail: `O response_type "${receivedResponseType}" não é suportado para esta operação.` });
+      OAuthError.throw("UNSUPPORTED_RESPONSE_TYPE", {
+        detail: `O response_type "${receivedResponseType}" não é suportado para esta operação.`,
+      });
     }
     return true;
   }

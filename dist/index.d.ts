@@ -3,6 +3,8 @@ import { createHash, randomInt } from 'crypto';
 /**
  * @file Módulo centralizado para gerenciamento de erros do OAuth 2.0.
  * @see {@link https://datatracker.ietf.org/doc/html/rfc6749#section-5.2} para erros padrão.
+ * @see {@link https://datatracker.ietf.org/doc/html/rfc8628} para erros do Device Flow.
+ * @see {@link https://datatracker.ietf.org/doc/html/rfc7636} para erros PKCE.
  */
 
 // ==================================================================================================================================================
@@ -86,6 +88,74 @@ const ERROR_SPECS = {
     status: 400,
   },
 
+  // --- Erros Adicionais Úteis ---
+  INVALID_TOKEN: {
+    code: "invalid_token",
+    description:
+      "O token de acesso fornecido é inválido, malformado, expirado ou foi revogado.",
+    status: 401,
+  },
+  INSUFFICIENT_SCOPE: {
+    code: "insufficient_scope",
+    description:
+      "O token de acesso não possui os escopos necessários para acessar o recurso solicitado.",
+    status: 403,
+  },
+  UNAUTHORIZED_CLIENT: {
+    code: "unauthorized_client",
+    description:
+      "O cliente não está autorizado a usar este método de concessão de autorização.",
+    status: 400,
+  },
+  INVALID_REDIRECT_URI: {
+    code: "invalid_redirect_uri",
+    description:
+      "A URI de redirecionamento fornecida não é válida ou não corresponde às URIs pré-registradas.",
+    status: 400,
+  },
+  UNSUPPORTED_TOKEN_TYPE: {
+    code: "unsupported_token_type",
+    description:
+      "O servidor de autorização não suporta a revogação do tipo de token apresentado.",
+    status: 400,
+  },
+
+  // --- Erros Relacionados a Rate Limiting ---
+  TOO_MANY_REQUESTS: {
+    code: "too_many_requests",
+    description:
+      "O cliente excedeu o limite de taxa de requisições. Tente novamente mais tarde.",
+    status: 429,
+  },
+
+  // --- Erros Relacionados a PKCE (RFC 7636) ---
+  INVALID_CODE_CHALLENGE: {
+    code: "invalid_request", // PKCE usa invalid_request para challenges inválidos
+    description:
+      "O code_challenge fornecido é inválido, malformado ou usa um método não suportado.",
+    status: 400,
+  },
+  INVALID_CODE_VERIFIER: {
+    code: "invalid_grant", // PKCE usa invalid_grant para verifiers inválidos
+    description:
+      "O code_verifier fornecido não corresponde ao code_challenge da requisição de autorização.",
+    status: 400,
+  },
+
+  // --- Erros de Configuração e Estado ---
+  CONFIGURATION_ERROR: {
+    code: "server_error",
+    description:
+      "Erro na configuração do servidor de autorização. Contate o administrador.",
+    status: 500,
+  },
+  SERVICE_UNAVAILABLE: {
+    code: "temporarily_unavailable",
+    description:
+      "O serviço de autorização está temporariamente indisponível para manutenção.",
+    status: 503,
+  },
+
   // --- Erros Customizados (Específicos da sua aplicação) ---
   MISMATCH_CLIENT: {
     code: "mismatch_client",
@@ -96,6 +166,39 @@ const ERROR_SPECS = {
     code: "todo_error",
     description: "A funcionalidade solicitada ainda não foi implementada.",
     status: 501, // 501 Not Implemented é semanticamente mais adequado.
+  },
+
+  // --- Erros de Validação de Dados ---
+  MALFORMED_REQUEST: {
+    code: "invalid_request",
+    description:
+      "A requisição contém dados malformados ou não pode ser processada.",
+    status: 400,
+  },
+  MISSING_PARAMETER: {
+    code: "invalid_request",
+    description: "Um parâmetro obrigatório está ausente da requisição.",
+    status: 400,
+  },
+  DUPLICATE_PARAMETER: {
+    code: "invalid_request",
+    description:
+      "A requisição contém parâmetros duplicados que devem ser únicos.",
+    status: 400,
+  },
+
+  // --- Erros de Segurança ---
+  REPLAY_ATTACK: {
+    code: "invalid_grant",
+    description:
+      "Tentativa de reutilização de uma concessão de uso único detectada.",
+    status: 400,
+  },
+  SUSPICIOUS_ACTIVITY: {
+    code: "access_denied",
+    description:
+      "Atividade suspeita detectada. A requisição foi negada por motivos de segurança.",
+    status: 403,
   },
 };
 
@@ -120,37 +223,130 @@ let OAuthError$1 = class OAuthError extends Error {
     if (more_info) {
       this.more_info = more_info;
     }
+
+    // Preserva o stack trace original
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, OAuthError);
+    }
   }
 
   /**
    * Converte a instância do erro para um objeto JSON simples,
    * mantendo a compatibilidade com o formato de resposta esperado.
-   * @returns {{error: string, error_description: string, status: number}}
+   * @param {boolean} [includeDebugInfo=false] - Se deve incluir informações de debug
+   * @returns {{error: string, error_description: string, status?: number}}
    */
-  toResponseObject() {
-    return {
+  toResponseObject(includeDebugInfo = false) {
+    const response = {
       error: this.error,
       error_description: this.error_description,
       status: this.status,
     };
+
+    // Inclui status apenas em modo debug ou para logs internos
+    if (includeDebugInfo) {
+      response.more_info = this.more_info;
+    }
+
+    return response;
+  }
+
+  /**
+   * Converte para formato de resposta HTTP padrão OAuth 2.0
+   * @returns {{body: object, status: number, headers: object}}
+   */
+  toHttpResponse() {
+    return {
+      status: this.status,
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store",
+        Pragma: "no-cache",
+      },
+      body: this.toResponseObject(),
+    };
+  }
+
+  /**
+   * Verifica se o erro é do tipo especificado
+   * @param {keyof typeof ERROR_SPECS} errorType - Tipo do erro a verificar
+   * @returns {boolean}
+   */
+  isType(errorType) {
+    const spec = ERROR_SPECS[errorType];
+    return spec && this.error === spec.code;
+  }
+
+  /**
+   * Verifica se o erro é retryable (pode ser tentado novamente)
+   * @returns {boolean}
+   */
+  isRetryable() {
+    const retryableErrors = [
+      "server_error",
+      "temporarily_unavailable",
+      "too_many_requests",
+    ];
+    return retryableErrors.includes(this.error);
   }
 
   /**
    * Factory method para criar e lançar uma instância de OAuthError.
    * @param {keyof typeof ERROR_SPECS} errorType - O tipo do erro (ex: 'INVALID_CLIENT').
    * @param {any} [more_info] - Informações adicionais para depuração.
+   * @throws {OAuthError}
    */
   static throw(errorType, more_info) {
     const spec = ERROR_SPECS[errorType];
     if (!spec) {
       // Fallback para um erro de servidor caso um tipo de erro inválido seja passado.
       const serverErrorSpec = ERROR_SPECS.SERVER_ERROR;
-      throw new OAuthError(
-        serverErrorSpec,
-        `Tipo de erro desconhecido: ${errorType}`
-      );
+      throw new OAuthError(serverErrorSpec, {
+        originalErrorType: errorType,
+        message: `Tipo de erro desconhecido: ${errorType}`,
+        ...more_info,
+      });
     }
     throw new OAuthError(spec, more_info);
+  }
+
+  /**
+   * Cria uma instância sem lançar (útil para logging ou retornos condicionais)
+   * @param {keyof typeof ERROR_SPECS} errorType - O tipo do erro
+   * @param {any} [more_info] - Informações adicionais
+   * @returns {OAuthError}
+   */
+  static create(errorType, more_info) {
+    const spec = ERROR_SPECS[errorType];
+    if (!spec) {
+      const serverErrorSpec = ERROR_SPECS.SERVER_ERROR;
+      return new OAuthError(serverErrorSpec, {
+        originalErrorType: errorType,
+        message: `Tipo de erro desconhecido: ${errorType}`,
+        ...more_info,
+      });
+    }
+    return new OAuthError(spec, more_info);
+  }
+
+  /**
+   * Valida se um código de erro é válido
+   * @param {string} errorCode - Código do erro a validar
+   * @returns {boolean}
+   */
+  static isValidErrorCode(errorCode) {
+    return Object.values(ERROR_SPECS).some((spec) => spec.code === errorCode);
+  }
+
+  /**
+   * Obtém a especificação de um erro pelo código
+   * @param {string} errorCode - Código do erro
+   * @returns {object|null}
+   */
+  static getSpecByCode(errorCode) {
+    return (
+      Object.values(ERROR_SPECS).find((spec) => spec.code === errorCode) || null
+    );
   }
 };
 
@@ -228,16 +424,32 @@ class AuthFlow {
 
     this.match_all_scopes = options.match_all_scopes ?? true;
 
-    const splitString = (str) =>
-      typeof str === "string" && str ? str.split(" ").filter((s) => s) : [];
+    this.grant_types = this._setArray(options.grant_types);
+    this.scopes = this._setArray(options.scopes);
+    this.redirect_uris = this._setArray(options.redirect_uris);
+  }
 
-    this.grant_types = options.grant_types
-      ? splitString(options.grant_types)
-      : [];
-    this.scopes = options.scopes ? splitString(options.scopes) : [];
-    this.redirect_uris = options.redirect_uris
-      ? splitString(options.redirect_uris)
-      : [];
+  // ================================================================================================================================================
+
+  _splitString(str) {
+    if (typeof str === "string" && str) {
+      return [...new Set(str.split(" ").filter((s) => s))];
+    }
+    return [];
+  }
+
+  // ================================================================================================================================================
+
+  _setArray(obj) {
+    if (!obj) {
+      return [];
+    }
+    if (typeof obj === "string") {
+      return this._splitString(obj);
+    } else if (Array.isArray(obj)) {
+      return obj;
+    }
+    return [];
   }
 
   // ================================================================================================================================================
@@ -251,7 +463,7 @@ class AuthFlow {
   validateScopes(requestedScopeString) {
     // A lógica de `validateScopes` espera um array, mas a requisição vem como string.
     // O ideal é normalizar a entrada. O parâmetro do método foi ajustado para refletir isso.
-    const requestedScopes = this._parseScopeString(requestedScopeString);
+    const requestedScopes = this._splitString(requestedScopeString);
 
     if (requestedScopes.length === 0) {
       // Usando a propriedade com o nome original: `scopes_required`
@@ -299,22 +511,6 @@ class AuthFlow {
   // ================================================================================================================================================
 
   /**
-   * Função utilitária privada para converter a string de escopo em um array de strings.
-   * @private
-   * @param {string} scopeString - String de escopos (ex: "read write").
-   * @returns {string[]} Array de escopos (ex: ['read', 'write']).
-   */
-  _parseScopeString(scopeString) {
-    if (!scopeString || typeof scopeString !== "string") {
-      return [];
-    }
-    // Remove duplicatas e espaços vazios.
-    return [...new Set(scopeString.split(" ").filter((s) => s))];
-  }
-
-  // ================================================================================================================================================
-
-  /**
    * Valida o 'grant_type' da requisição contra os tipos permitidos para este cliente.
    * @param {string} requestedGrantType - O `grant_type` recebido na requisição.
    * @throws {OAuthError} Lança 'UNSUPPORTED_GRANT_TYPE' se o tipo não for permitido.
@@ -322,7 +518,7 @@ class AuthFlow {
    */
   validateGrantType(requestedGrantType) {
     if (!this.grant_types.includes(requestedGrantType)) {
-      OAuthError.throw('UNSUPPORTED_GRANT_TYPE', {
+      OAuthError.throw("UNSUPPORTED_GRANT_TYPE", {
         detail: `O grant_type "${requestedGrantType}" não é suportado por este cliente.`,
       });
     }
@@ -342,10 +538,14 @@ class AuthFlow {
    */
   static validateResponseType(receivedResponseType, expectedResponseType) {
     if (!receivedResponseType) {
-        OAuthError.throw('INVALID_REQUEST', { detail: 'O parâmetro "response_type" é obrigatório.' });
+      OAuthError.throw("INVALID_REQUEST", {
+        detail: 'O parâmetro "response_type" é obrigatório.',
+      });
     }
     if (receivedResponseType !== expectedResponseType) {
-        OAuthError.throw('UNSUPPORTED_RESPONSE_TYPE', { detail: `O response_type "${receivedResponseType}" não é suportado para esta operação.` });
+      OAuthError.throw("UNSUPPORTED_RESPONSE_TYPE", {
+        detail: `O response_type "${receivedResponseType}" não é suportado para esta operação.`,
+      });
     }
     return true;
   }
@@ -511,7 +711,7 @@ class AuthorizationCodeFlow extends AuthFlow {
    * @returns {Promise<object>} O resultado da geração do token.
    */
   async getToken({ code, redirect_uri, code_verifier, token_info }) {
-    this.validateGrantType("authorization_code", this.grant_types);
+    this.validateGrantType("authorization_code");
 
     // 1. Valida o código e recupera os dados salvos com ele.
     const validation_data = await this.validateCode(code);
@@ -667,7 +867,7 @@ class ClientCredentialsFlow extends AuthFlow {
   async getToken({ scope, token_info }) {
     // 1. Valida se o cliente tem permissão para usar este grant type.
     // Note que não há `try/catch` aqui, pois o erro deve se propagar naturalmente.
-    this.validateGrantType("client_credentials", this.grant_types);
+    this.validateGrantType("client_credentials");
 
     // 2. Valida os escopos solicitados (se houver) contra os permitidos para o cliente.
     // Nossa `validateScopes` refatorada espera a string de escopo e retorna os escopos concedidos.
@@ -700,7 +900,7 @@ class RefreshTokenFlow extends AuthFlow {
    */
   async getToken({ refresh_token, scope, token_info }) {
     // 1. Validações iniciais
-    this.validateGrantType("refresh_token", this.grant_types);
+    this.validateGrantType("refresh_token");
     if (!refresh_token) {
       OAuthError$1.throw("INVALID_REQUEST", {
         detail: 'O parâmetro "refresh_token" é obrigatório.',
@@ -729,7 +929,7 @@ class RefreshTokenFlow extends AuthFlow {
    * @returns {string[]} O array de escopos a serem concedidos.
    */
   _determineGrantedScopes(requestedScopeString, originalScopes) {
-    const requestedScopes = this._parseScopeString(requestedScopeString);
+    const requestedScopes = this._splitString(requestedScopeString);
 
     if (requestedScopes.length === 0) {
       // Nenhum escopo solicitado, o novo token herda os escopos originais.
@@ -893,7 +1093,7 @@ class DeviceCodeFlow extends AuthFlow {
    * @returns {Promise<object>} O resultado da geração do token.
    */
   async getToken({ device_code, token_info }) {
-    this.validateGrantType(this.device_grant_name, this.grant_types);
+    this.validateGrantType(this.device_grant_name);
     if (!device_code) {
       OAuthError$1.throw("INVALID_REQUEST", {
         detail: 'O parâmetro "device_code" é obrigatório.',
@@ -962,4 +1162,4 @@ class DeviceCodeFlow extends AuthFlow {
 
 // ==================================================================================================================================================
 
-export { AuthFlow, AuthorizationCodeFlow, ClientCredentialsFlow, DeviceCodeFlow, OAuthError$1 as OAuthError, RefreshTokenFlow };
+export { AuthFlow, AuthorizationCodeFlow, ClientCredentialsFlow, DeviceCodeFlow, ERROR_SPECS, OAuthError$1 as OAuthError, RefreshTokenFlow };
